@@ -1,0 +1,27 @@
+# permissions for end users to view exporterscraperconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: exporterscraperconfig-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: operator-exporter
+    app.kubernetes.io/part-of: operator-exporter
+    app.kubernetes.io/managed-by: kustomize
+  name: exporterscraperconfig-viewer-role
+rules:
+- apiGroups:
+  - finops.krateo.io
+  resources:
+  - exporterscraperconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - finops.krateo.io
+  resources:
+  - exporterscraperconfigs/status
+  verbs:
+  - get

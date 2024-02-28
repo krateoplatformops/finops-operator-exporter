@@ -1,0 +1,12 @@
+apiVersion: finops.krateo.io/v1
+kind: ExporterScraperConfig
+metadata:
+  labels:
+    app.kubernetes.io/name: exporterscraperconfig
+    app.kubernetes.io/instance: exporterscraperconfig-sample
+    app.kubernetes.io/part-of: operator-exporter
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator-exporter
+  name: exporterscraperconfig-sample
+spec:
+  # TODO(user): Add fields here
