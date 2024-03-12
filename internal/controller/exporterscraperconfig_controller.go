@@ -53,7 +53,6 @@ type ExporterScraperConfigReconciler struct {
 func (r *ExporterScraperConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.Log.WithValues("FinOps.V1", req.NamespacedName)
 	var err error
-
 	// Get the request object
 	var exporterScraperConfig finopsv1.ExporterScraperConfig
 	if err := r.Get(ctx, req.NamespacedName, &exporterScraperConfig); err != nil {
@@ -92,6 +91,8 @@ func (r *ExporterScraperConfigReconciler) Reconcile(ctx context.Context, req ctr
 					return ctrl.Result{}, err
 				}
 				return ctrl.Result{}, nil
+			} else if err = r.checkExporterStatus(ctx, exporterScraperConfig); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
 	} else {
@@ -191,10 +192,36 @@ func (r *ExporterScraperConfigReconciler) createExporterFromScratch(ctx context.
 		servicePort = int(port.TargetPort.IntVal)
 	}
 
-	// Create the CRD to start the Scraper Operator
-	err = utils.CreateScraperCRD(ctx, exporterScraperConfig, serviceIp, servicePort)
+	// Create the CR to start the Scraper Operator
+	err = utils.CreateScraperCR(ctx, exporterScraperConfig, serviceIp, servicePort)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r *ExporterScraperConfigReconciler) checkExporterStatus(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig) error {
+	genericExporterConfigMap, err := utils.GetGenericExporterConfigMap(exporterScraperConfig)
+	if err != nil {
+		return err
+	}
+	genericExporterDeployment, _ := utils.GetGenericExporterDeployment(exporterScraperConfig)
+	genericExporterService, _ := utils.GetGenericExporterService(exporterScraperConfig)
+
+	err = r.Update(ctx, genericExporterConfigMap)
+	if err != nil {
+		return err
+	}
+
+	err = r.Update(ctx, genericExporterDeployment)
+	if err != nil {
+		return err
+	}
+
+	err = r.Update(ctx, genericExporterService)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

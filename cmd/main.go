@@ -37,6 +37,7 @@ import (
 	finopsv1 "operator-exporter/api/v1"
 
 	"operator-exporter/internal/controller"
+	"operator-exporter/internal/informer"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -128,6 +129,30 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ExporterScraperConfig")
+		os.Exit(1)
+	}
+
+	if err = (&informer.ConfigMapReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ConfigMapInformer")
+		os.Exit(1)
+	}
+
+	if err = (&informer.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ServiceInformer")
+		os.Exit(1)
+	}
+
+	if err = (&informer.DeploymentReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "DeploymentInformer")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
