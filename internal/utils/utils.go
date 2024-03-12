@@ -18,7 +18,7 @@ import (
 
 var repository = os.Getenv("REPO")
 
-func int32Ptr(i int32) *int32 { return &i }
+func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	return &appsv1.Deployment{
@@ -35,7 +35,7 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1),
+			Replicas: Int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"scraper": exporterScraperConfig.Name,
@@ -138,7 +138,7 @@ func GetGenericExporterService(exporterScraperConfig finopsv1.ExporterScraperCon
 	}, nil
 }
 
-func CreateScraperCRD(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) error {
+func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) error {
 	inClusterConfig, err := rest.InClusterConfig()
 	if err != nil {
 		return err
