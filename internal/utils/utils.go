@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,6 +22,13 @@ var repository = os.Getenv("REPO")
 func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
+	imageName := repository
+	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:") {
+		imageName += "/prometheus-resource-exporter-azure:0.1"
+	} else {
+		imageName += "/prometheus-exporter-generic:0.1"
+	}
+
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      exporterScraperConfig.Name + "-deployment",
@@ -48,15 +56,34 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 					},
 				},
 				Spec: corev1.PodSpec{
+					ServiceAccountName: "exporterscraper-config-getter-sa",
 					Containers: []corev1.Container{
 						{
 							Name:            "scraper",
-							Image:           repository + "/prometheus-exporter-generic:0.1",
+							Image:           imageName,
 							ImagePullPolicy: corev1.PullAlways,
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "config-volume",
 									MountPath: "/config",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "NAMESPACE",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.namespace",
+										},
+									},
+								},
+								{
+									Name: "DEPLOYMENT",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.name",
+										},
+									},
 								},
 							},
 						},
@@ -85,6 +112,8 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 }
 
 func GetGenericExporterConfigMap(exporterScraperConfig finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
+	exporterScraperConfig.Spec.ExporterConfig.URL = strings.Replace(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:", "", 1)
+
 	yamlData, err := yaml.Marshal(exporterScraperConfig.Spec.ExporterConfig)
 	if err != nil {
 		return &corev1.ConfigMap{}, err

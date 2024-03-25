@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: exporterscraper-config-getter-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: exporterscraper-config-getter-role
+rules:
+- apiGroups: ["finops.krateo.io"]
+  resources: ["exporterscraperconfigs"]
+  verbs: ["get", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: exporterscraper-config-getter-rb
+subjects:
+- kind: ServiceAccount
+  name: exporterscraper-config-getter-sa
+roleRef:
+  kind: Role
+  name: exporterscraper-config-getter-role
+  apiGroup: rbac.authorization.k8s.io
