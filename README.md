@@ -1,8 +1,22 @@
 # operator-exporter
-Operator to create exporters and configure the scraper operator CRD. 
+This repository is part of a wider exporting architecture for the FinOps Cost and Usage Specification (FOCUS). This component is tasked with the creation of a generic exporting pipeline, according to the description given in a Custom Resource (CR). After the creation of the CR, the operator reads the "exporting" configuration part and creates three resources: a deployment with a generic prometheus exporter inside, a configmap containing the configuration and a service that exposes the prometheus metrics. The given endpoint is supposed to be a CSV file containing a FOCUS report. Then, it creates a new CR for another operator, which start a generic scraper that scrapes the data and uploads it to a database.
 
-## Getting Started
+## Dependencies
+To run this repository in your Kubernetes cluster, you need to have the following images in the same container registry:
+ - prometheus-exporter-generic
+ - prometheus-scraper-generic
+ - operator-scraper
+ - prometheus-resource-exporter-azure
 
+There is also the need to have an active Databricks cluster, with SQL warehouse and notebooks configured. Its login details must be placed in the database-config CR.
+
+## Configuration
+To start the exporting process, see the "config-sample.yaml" file. It includes the database-config CR.
+The deployment of the operator needs a secret for the repository, called ==registry-credentials== in the namespace ==operator-exporter-system==.
+
+The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called ==registry-credentials-default==
+
+## Installation
 ### Prerequisites
 - go version v1.21.0+
 - docker version 17.03+.
@@ -63,37 +77,6 @@ make uninstall
 ```sh
 make undeploy
 ```
-
-## Project Distribution
-
-Following are the steps to build the installer and distribute this project to users.
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/operator-exporter:tag
-```
-
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
-
-2. Using the installer
-
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/operator-exporter/<tag or branch>/dist/install.yaml
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-**NOTE:** Run `make help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
 ## License
 
 Copyright 2024.
@@ -110,3 +93,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+## Tested platforms
+ - Azure
+
+
+## Bearer-token for Azure
+In order to invoke Azure API, the exporter needs to be authenticated first. In the current implementation, it utilizes the Azure REST API, which require the bearer-token for authentication. For each target Azure subscription, an application needs to be registered and assigned with the Cost Management Reader role.
+
+Once that is completed, run the following command to obtain the bearer-token (1h validity):
+```
+curl -X POST -d 'grant_type=client_credentials&client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&resource=https%3A%2F%2Fmanagement.azure.com%2F' https://login.microsoftonline.com/<TENANT_ID>/oauth2/token
+```
