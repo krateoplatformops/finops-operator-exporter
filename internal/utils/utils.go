@@ -24,9 +24,9 @@ func Int32Ptr(i int32) *int32 { return &i }
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := repository
 	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:") {
-		imageName += "/prometheus-resource-exporter-azure:0.1"
+		imageName += "/finops-prometheus-resource-exporter-azure:0.1.0"
 	} else {
-		imageName += "/prometheus-exporter-generic:0.1"
+		imageName += "/finops-prometheus-exporter-generic:0.1.0"
 	}
 
 	return &appsv1.Deployment{
@@ -168,6 +168,13 @@ func GetGenericExporterService(exporterScraperConfig finopsv1.ExporterScraperCon
 }
 
 func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) error {
+	if exporterScraperConfig.Spec.ScraperConfig.TableName == "" &&
+		exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours == 0 &&
+		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name == "" &&
+		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace == "" {
+		return nil
+	}
+
 	inClusterConfig, err := rest.InClusterConfig()
 	if err != nil {
 		return err
