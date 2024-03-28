@@ -17,16 +17,16 @@ import (
 	finopsv1 "operator-exporter/api/v1"
 )
 
-var repository = os.Getenv("REPO")
+var repository = strings.TrimSuffix(os.Getenv("REPO"), "/")
 
 func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := repository
 	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:") {
-		imageName += "/finops-prometheus-resource-exporter-azure:0.1.0"
+		imageName += "/finops-prometheus-resource-exporter-azure:latest"
 	} else {
-		imageName += "/finops-prometheus-exporter-generic:0.1.0"
+		imageName += "/finops-prometheus-exporter-generic:latest"
 	}
 
 	return &appsv1.Deployment{

@@ -24,8 +24,10 @@ import (
 
 // ExporterScraperConfigSpec defines the desired state of ExporterScraperConfig
 type ExporterScraperConfigSpec struct {
+	// +optional
 	ExporterConfig ExporterConfig `yaml:"exporterConfig" json:"exporterConfig"`
-	ScraperConfig  ScraperConfig  `yaml:"scraperConfig" json:"scraperConfig"`
+	// +optional
+	ScraperConfig ScraperConfig `yaml:"scraperConfig" json:"scraperConfig"`
 }
 
 // ExporterScraperConfigStatus defines the observed state of ExporterScraperConfig
