@@ -64,8 +64,10 @@ func init() {
 }
 
 type ExporterConfig struct {
-	Name                  string            `yaml:"name" json:"name"`
-	URL                   string            `yaml:"url" json:"url"`
+	Name string `yaml:"name" json:"name"`
+	Url  string `yaml:"url" json:"url"`
+	// +optional
+	UrlParsed             string            `yaml:"urlParsed" json:"urlParsed,omitempty"`
 	RequireAuthentication bool              `yaml:"requireAuthentication" json:"requireAuthentication"`
 	AuthenticationMethod  string            `yaml:"authenticationMethod" json:"authenticationMethod"`
 	PollingIntervalHours  int               `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
@@ -76,7 +78,7 @@ type ScraperConfig struct {
 	TableName            string `yaml:"tableName" json:"tableName"`
 	PollingIntervalHours int    `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
 	// +optional
-	Url                      string                   `yaml:"url" json:"url"`
+	Url                      string                   `yaml:"url" json:"url,omitempty"`
 	ScraperDatabaseConfigRef ScraperDatabaseConfigRef `yaml:"scraperDatabaseConfigRef" json:"scraperDatabaseConfigRef"`
 }
 

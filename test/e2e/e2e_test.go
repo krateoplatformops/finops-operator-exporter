@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"operator-exporter/test/utils"
+	"github.com/krateoplatformops/finops-operator-exporter/test/utils"
 )
 
 const namespace = "operator-exporter-system"

@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	finopsv1 "operator-exporter/api/v1"
+	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
 )
 
 var repository = strings.TrimSuffix(os.Getenv("REPO"), "/")
@@ -23,7 +23,7 @@ func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := repository
-	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:") {
+	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.Url, "@RES:") {
 		imageName += "/finops-prometheus-resource-exporter-azure:latest"
 	} else {
 		imageName += "/finops-prometheus-exporter-generic:latest"
@@ -68,24 +68,6 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 									MountPath: "/config",
 								},
 							},
-							Env: []corev1.EnvVar{
-								{
-									Name: "NAMESPACE",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "metadata.namespace",
-										},
-									},
-								},
-								{
-									Name: "DEPLOYMENT",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "metadata.name",
-										},
-									},
-								},
-							},
 						},
 					},
 					Volumes: []corev1.Volume{
@@ -112,9 +94,9 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 }
 
 func GetGenericExporterConfigMap(exporterScraperConfig finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
-	exporterScraperConfig.Spec.ExporterConfig.URL = strings.Replace(exporterScraperConfig.Spec.ExporterConfig.URL, "@RES:", "", 1)
+	exporterScraperConfig.Spec.ExporterConfig.Url = strings.Replace(exporterScraperConfig.Spec.ExporterConfig.Url, "@RES:", "", 1)
 
-	yamlData, err := yaml.Marshal(exporterScraperConfig.Spec.ExporterConfig)
+	yamlData, err := yaml.Marshal(exporterScraperConfig)
 	if err != nil {
 		return &corev1.ConfigMap{}, err
 	}

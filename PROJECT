@@ -5,8 +5,8 @@
 domain: krateo.io
 layout:
 - go.kubebuilder.io/v4
-projectName: operator-exporter
-repo: operator-exporter
+projectName: github.com/krateoplatformops/finops-operator-exporter
+repo: github.com/krateoplatformops/finops-operator-exporter
 resources:
 - api:
     crdVersion: v1

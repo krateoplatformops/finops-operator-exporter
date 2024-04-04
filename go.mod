@@ -1,4 +1,4 @@
-module operator-exporter
+module github.com/krateoplatformops/finops-operator-exporter
 
 go 1.21
 

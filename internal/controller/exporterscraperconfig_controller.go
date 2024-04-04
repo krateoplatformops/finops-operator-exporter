@@ -28,9 +28,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	finopsv1 "operator-exporter/api/v1"
+	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
 
-	utils "operator-exporter/internal/utils"
+	utils "github.com/krateoplatformops/finops-operator-exporter/internal/utils"
 )
 
 // ExporterScraperConfigReconciler reconciles a ExporterScraperConfig object
