@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	finopsv1 "operator-exporter/api/v1"
-	"operator-exporter/internal/utils"
+	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
+	"github.com/krateoplatformops/finops-operator-exporter/internal/utils"
 
 	appsv1 "k8s.io/api/apps/v1"
 )
