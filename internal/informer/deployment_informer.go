@@ -38,13 +38,11 @@ type DeploymentReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=finops.krateo.io,resources=exporterscraperconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=finops.krateo.io,resources=scraperconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=finops.krateo.io,resources=databaseconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=finops.krateo.io,resources=scraperconfigs,verbs=get;create;update
+//+kubebuilder:rbac:groups=finops.krateo.io,resources=databaseconfigs,verbs=get;create;update
 //+kubebuilder:rbac:groups=finops.krateo.io,resources=exporterscraperconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=finops.krateo.io,resources=exporterscraperconfigs/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;create;list;update
 
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.Log.WithValues("FinOps.V1", "Deployment")
