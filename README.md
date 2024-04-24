@@ -12,7 +12,7 @@ There is also the need to have an active Databricks cluster, with SQL warehouse 
 
 ## Configuration
 To start the exporting process, see the "config-sample.yaml" file. It includes the database-config CR.
-The deployment of the operator needs a secret for the repository, called `registry-credentials` in the namespace `operator-exporter-system`.
+The deployment of the operator needs a secret for the repository, called `registry-credentials` in the namespace `finops`.
 
 The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials-default`
 

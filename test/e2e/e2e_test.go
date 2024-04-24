@@ -27,7 +27,7 @@ import (
 	"github.com/krateoplatformops/finops-operator-exporter/test/utils"
 )
 
-const namespace = "operator-exporter-system"
+const namespace = "finops"
 
 var _ = Describe("controller", Ordered, func() {
 	BeforeAll(func() {
