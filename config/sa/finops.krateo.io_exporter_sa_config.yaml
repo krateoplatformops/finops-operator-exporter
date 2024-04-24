@@ -2,11 +2,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: exporterscraper-config-getter-sa
+  namespace: finops
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: exporterscraper-config-getter-role
+  namespace: finops
 rules:
 - apiGroups: ["finops.krateo.io"]
   resources: ["exporterscraperconfigs"]
@@ -16,6 +18,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: exporterscraper-config-getter-rb
+  namespace: finops
 subjects:
 - kind: ServiceAccount
   name: exporterscraper-config-getter-sa
