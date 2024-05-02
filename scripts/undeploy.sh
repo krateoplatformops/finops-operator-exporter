@@ -31,3 +31,4 @@ go-install-tool "${LOCALBIN}" "sigs.k8s.io/controller-tools/cmd/controller-gen" 
 $(echo $CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 $(echo $KUSTOMIZE) build config/default | $(echo $KUBECTL) delete --ignore-not-found=${IGNORE_NOT_FOUND} -f -
+$(echo $KUBECTL) delete -f config/sa

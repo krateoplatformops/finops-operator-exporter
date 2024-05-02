@@ -33,9 +33,9 @@ type ExporterScraperConfigSpec struct {
 // ExporterScraperConfigStatus defines the observed state of ExporterScraperConfig
 type ExporterScraperConfigStatus struct {
 	// A list of pointers to currently running scraper deployments.
-	ActiveExporters []corev1.ObjectReference          `json:"active,omitempty"`
-	ConfigMaps      map[string]corev1.ObjectReference `json:"configMaps,omitempty"`
-	Services        map[string]corev1.ObjectReference `json:"services,omitempty"`
+	ActiveExporter corev1.ObjectReference `json:"active,omitempty"`
+	ConfigMap      corev1.ObjectReference `json:"configMaps,omitempty"`
+	Service        corev1.ObjectReference `json:"services,omitempty"`
 }
 
 //+kubebuilder:object:root=true

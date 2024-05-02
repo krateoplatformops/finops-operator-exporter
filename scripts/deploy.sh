@@ -31,3 +31,4 @@ $(echo $CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." out
 cd config/manager && $(echo $KUSTOMIZE) edit set image controller=${IMG} && $(echo $KUSTOMIZE) edit set configmap repo-envvar-configmap-exporter --from-literal=REPO=${REPO}
 cd ../..
 $(echo $KUSTOMIZE) build config/default | $(echo $KUBECTL) apply -f -
+$(echo $KUBECTL) apply -f config/sa
