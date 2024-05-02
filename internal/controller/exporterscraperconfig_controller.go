@@ -60,47 +60,33 @@ func (r *ExporterScraperConfigReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{Requeue: false}, client.IgnoreNotFound(err)
 	}
 
-	if exporterScraperConfig.Status.ConfigMaps == nil {
-		exporterScraperConfig.Status.ConfigMaps = make(map[string]corev1.ObjectReference)
-	}
-
-	if exporterScraperConfig.Status.Services == nil {
-		exporterScraperConfig.Status.Services = make(map[string]corev1.ObjectReference)
-	}
-
 	// Check if a deployment for this configuration already exists
-	if len(exporterScraperConfig.Status.ActiveExporters) > 0 {
-		for _, objRef := range exporterScraperConfig.Status.ActiveExporters {
-			existingObjDeployment := &appsv1.Deployment{}
+	existingObjDeployment := &appsv1.Deployment{}
+	ExistingDeploymentNamespace := exporterScraperConfig.Status.ActiveExporter.Namespace
+	ExistingDeploymentName := exporterScraperConfig.Status.ActiveExporter.Name
 
-			// ConfigMap status objRef and pointer for GET
-			objRefConfigMap := exporterScraperConfig.Status.ConfigMaps[objRef.Namespace+objRef.Name]
-			existingObjConfigMap := &corev1.ConfigMap{}
-			// Service status objRef and pointer for GET
-			objRefService := exporterScraperConfig.Status.Services[objRef.Namespace+objRef.Name]
-			existingObjService := &corev1.Service{}
+	// ConfigMap status objRef and pointer for GET
+	ExistingConfigMapNamespace := exporterScraperConfig.Status.ConfigMap.Namespace
+	ExistingConfigMapName := exporterScraperConfig.Status.ConfigMap.Name
+	existingObjConfigMap := &corev1.ConfigMap{}
+	// Service status objRef and pointer for GET
+	ExistingServiceNamespace := exporterScraperConfig.Status.Service.Namespace
+	ExistingServiceMapName := exporterScraperConfig.Status.Service.Name
+	existingObjService := &corev1.Service{}
 
-			// Check if all elements of the deployment exist
+	// Check if all elements of the deployment exist
 
-			_ = r.Get(ctx, types.NamespacedName{Namespace: objRef.Namespace, Name: objRef.Name}, existingObjDeployment)
-			_ = r.Get(ctx, types.NamespacedName{Namespace: objRefConfigMap.Namespace, Name: objRefConfigMap.Name}, existingObjConfigMap)
-			_ = r.Get(ctx, types.NamespacedName{Namespace: objRefService.Namespace, Name: objRefService.Name}, existingObjService)
-			// If any the objects does not exist, something happend, reconcile spec-status
-			if existingObjDeployment.Name == "" || existingObjConfigMap.Name == "" || existingObjService.Name == "" {
-				if err = r.createExporterFromScratch(ctx, req, exporterScraperConfig); err != nil {
-					return ctrl.Result{}, err
-				}
-				return ctrl.Result{}, nil
-			} else if err = r.checkExporterStatus(ctx, exporterScraperConfig); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	} else {
+	_ = r.Get(ctx, types.NamespacedName{Namespace: ExistingDeploymentNamespace, Name: ExistingDeploymentName}, existingObjDeployment)
+	_ = r.Get(ctx, types.NamespacedName{Namespace: ExistingConfigMapNamespace, Name: ExistingConfigMapName}, existingObjConfigMap)
+	_ = r.Get(ctx, types.NamespacedName{Namespace: ExistingServiceNamespace, Name: ExistingServiceMapName}, existingObjService)
+	// If any the objects does not exist, something happend, reconcile spec-status
+	if existingObjDeployment.Name == "" || existingObjConfigMap.Name == "" || existingObjService.Name == "" {
 		if err = r.createExporterFromScratch(ctx, req, exporterScraperConfig); err != nil {
 			return ctrl.Result{}, err
 		}
-
 		return ctrl.Result{}, nil
+	} else if err = r.checkExporterStatus(ctx, exporterScraperConfig); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
@@ -170,17 +156,17 @@ func (r *ExporterScraperConfigReconciler) createExporterFromScratch(ctx context.
 		}
 	}
 
-	exporterScraperConfig.Status.ActiveExporters = append(exporterScraperConfig.Status.ActiveExporters, corev1.ObjectReference{
+	exporterScraperConfig.Status.ActiveExporter = corev1.ObjectReference{
 		Kind:      genericExporterDeployment.Kind,
 		Namespace: genericExporterDeployment.Namespace,
 		Name:      genericExporterDeployment.Name,
-	})
-	exporterScraperConfig.Status.ConfigMaps[genericExporterDeployment.Namespace+genericExporterDeployment.Name] = corev1.ObjectReference{
+	}
+	exporterScraperConfig.Status.ConfigMap = corev1.ObjectReference{
 		Kind:      genericExporterConfigMap.Kind,
 		Namespace: genericExporterConfigMap.Namespace,
 		Name:      genericExporterConfigMap.Name,
 	}
-	exporterScraperConfig.Status.Services[genericExporterDeployment.Namespace+genericExporterDeployment.Name] = corev1.ObjectReference{
+	exporterScraperConfig.Status.Service = corev1.ObjectReference{
 		Kind:      genericExporterService.Kind,
 		Namespace: genericExporterService.Namespace,
 		Name:      genericExporterService.Name,
