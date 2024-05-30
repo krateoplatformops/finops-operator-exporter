@@ -13,6 +13,9 @@ rules:
 - apiGroups: ["finops.krateo.io"]
   resources: ["exporterscraperconfigs"]
   verbs: ["get", "create"]
+- apiGroups: ["finops.krateo.io"]
+  resources: ["focusconfigs"]
+  verbs: ["list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
