@@ -11,11 +11,8 @@ metadata:
   namespace: finops
 rules:
 - apiGroups: ["finops.krateo.io"]
-  resources: ["exporterscraperconfigs"]
-  verbs: ["get", "create"]
-- apiGroups: ["finops.krateo.io"]
-  resources: ["focusconfigs"]
-  verbs: ["list"]
+  resources: ["*"]
+  verbs: ["get", "list", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

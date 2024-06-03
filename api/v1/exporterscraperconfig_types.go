@@ -64,8 +64,8 @@ func init() {
 }
 
 type ExporterConfig struct {
-	Name string `yaml:"name" json:"name"`
-	Url  string `yaml:"url" json:"url"`
+	Provider ObjectRef `yaml:"provider" json:"provider"`
+	Url      string    `yaml:"url" json:"url"`
 	// +optional
 	UrlParsed             string            `yaml:"urlParsed" json:"urlParsed,omitempty"`
 	RequireAuthentication bool              `yaml:"requireAuthentication" json:"requireAuthentication"`
@@ -78,13 +78,8 @@ type ScraperConfig struct {
 	TableName            string `yaml:"tableName" json:"tableName"`
 	PollingIntervalHours int    `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
 	// +optional
-	Url                      string                   `yaml:"url" json:"url,omitempty"`
-	ScraperDatabaseConfigRef ScraperDatabaseConfigRef `yaml:"scraperDatabaseConfigRef" json:"scraperDatabaseConfigRef"`
-}
-
-type ScraperDatabaseConfigRef struct {
-	Name      string `yaml:"name" json:"name"`
-	Namespace string `yaml:"namespace" json:"namespace"`
+	Url                      string    `yaml:"url" json:"url,omitempty"`
+	ScraperDatabaseConfigRef ObjectRef `yaml:"scraperDatabaseConfigRef" json:"scraperDatabaseConfigRef"`
 }
 
 type ScraperConfigFromScraperOperator struct {
@@ -95,8 +90,13 @@ type ScraperConfigFromScraperOperator struct {
 }
 
 type ScraperConfigSpecFromScraperOperator struct {
-	TableName                string                   `yaml:"tableName" json:"tableName"`
-	PollingIntervalHours     int                      `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
-	Url                      string                   `yaml:"url" json:"url"`
-	ScraperDatabaseConfigRef ScraperDatabaseConfigRef `yaml:"scraperDatabaseConfigRef" json:"scraperDatabaseConfigRef"`
+	TableName                string    `yaml:"tableName" json:"tableName"`
+	PollingIntervalHours     int       `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
+	Url                      string    `yaml:"url" json:"url"`
+	ScraperDatabaseConfigRef ObjectRef `yaml:"scraperDatabaseConfigRef" json:"scraperDatabaseConfigRef"`
+}
+
+type ObjectRef struct {
+	Name      string `json:"name" yaml:"name"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 }

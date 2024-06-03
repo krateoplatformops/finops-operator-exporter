@@ -202,7 +202,7 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 				TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
 				Url:                  url,
 				PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
-				ScraperDatabaseConfigRef: finopsv1.ScraperDatabaseConfigRef{
+				ScraperDatabaseConfigRef: finopsv1.ObjectRef{
 					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 				},
