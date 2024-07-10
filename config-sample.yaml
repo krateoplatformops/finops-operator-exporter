@@ -21,7 +21,9 @@ metadata:
   name: # ExporterScraperConfig name
 spec:
   exporterConfig: # same as krateoplatformops/finops-prometheus-exporter-generic
-    name: #name of the exporter
+    provider: 
+      name: # name of the provider config
+      namespace: # namespace of the provider config
     url: #url including http/https of the CSV-based API to export, parts with <varName> are taken from additionalVariables: http://<varName> -> http://sample 
     requireAuthentication: #true/false
     authenticationMethod: #one of: bearer-token
