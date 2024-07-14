@@ -25,8 +25,14 @@ spec:
                   type: string
                   nullable: false
                 token: 
-                  type: string
-                  nullable: false
+                  type: object
+                  properties:
+                    name: 
+                      type: string
+                      nullable: false
+                    namespace: string
+                      type: string
+                      nullable: false
                 clusterName: 
                   type: string
                   nullable: false

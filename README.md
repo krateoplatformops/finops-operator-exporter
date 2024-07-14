@@ -23,8 +23,7 @@ The exporter container is created in the namespace of the CR. The exporter conta
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
-### To Deploy on the cluster
-## Installation with HELM
+### Installation with HELM
 ```sh
 $ helm repo add krateo https://charts.krateo.io
 $ helm repo update krateo
