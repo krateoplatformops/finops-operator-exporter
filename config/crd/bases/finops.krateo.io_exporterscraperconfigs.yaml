@@ -48,6 +48,16 @@ spec:
                     type: object
                   authenticationMethod:
                     type: string
+                  bearerToken:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
                   pollingIntervalHours:
                     type: integer
                   provider:
