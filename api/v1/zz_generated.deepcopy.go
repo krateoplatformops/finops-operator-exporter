@@ -28,6 +28,7 @@ import (
 func (in *ExporterConfig) DeepCopyInto(out *ExporterConfig) {
 	*out = *in
 	out.Provider = in.Provider
+	out.BearerToken = in.BearerToken
 	if in.AdditionalVariables != nil {
 		in, out := &in.AdditionalVariables, &out.AdditionalVariables
 		*out = make(map[string]string, len(*in))

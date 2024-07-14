@@ -67,11 +67,13 @@ type ExporterConfig struct {
 	Provider ObjectRef `yaml:"provider" json:"provider"`
 	Url      string    `yaml:"url" json:"url"`
 	// +optional
-	UrlParsed             string            `yaml:"urlParsed" json:"urlParsed,omitempty"`
-	RequireAuthentication bool              `yaml:"requireAuthentication" json:"requireAuthentication"`
-	AuthenticationMethod  string            `yaml:"authenticationMethod" json:"authenticationMethod"`
-	PollingIntervalHours  int               `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
-	AdditionalVariables   map[string]string `yaml:"additionalVariables" json:"additionalVariables"`
+	UrlParsed             string `yaml:"urlParsed" json:"urlParsed,omitempty"`
+	RequireAuthentication bool   `yaml:"requireAuthentication" json:"requireAuthentication"`
+	AuthenticationMethod  string `yaml:"authenticationMethod" json:"authenticationMethod"`
+	// +optional
+	BearerToken          ObjectRef         `yaml:"bearerToken" json:"bearerToken"`
+	PollingIntervalHours int               `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
+	AdditionalVariables  map[string]string `yaml:"additionalVariables" json:"additionalVariables"`
 }
 
 type ScraperConfig struct {
