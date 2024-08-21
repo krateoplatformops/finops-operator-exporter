@@ -69,9 +69,13 @@ type ExporterConfig struct {
 	// +optional
 	UrlParsed             string `yaml:"urlParsed" json:"urlParsed,omitempty"`
 	RequireAuthentication bool   `yaml:"requireAuthentication" json:"requireAuthentication"`
-	AuthenticationMethod  string `yaml:"authenticationMethod" json:"authenticationMethod"`
+	// +kubebuilder:validation:Pattern=`^(\bcert-file\b)|(\bbearer-token\b)$`
+	AuthenticationMethod string `yaml:"authenticationMethod" json:"authenticationMethod"`
 	// +optional
-	BearerToken          ObjectRef         `yaml:"bearerToken" json:"bearerToken"`
+	BearerToken ObjectRef `yaml:"bearerToken" json:"bearerToken"`
+	// +kubebuilder:validation:Pattern=`^(\b[Cc]ost\b)|(\b[Rr]esource\b)$`
+	// +optional
+	MetricType           string            `yaml:"metricType" json:"metricType"`
 	PollingIntervalHours int               `yaml:"pollingIntervalHours" json:"pollingIntervalHours"`
 	AdditionalVariables  map[string]string `yaml:"additionalVariables" json:"additionalVariables"`
 }

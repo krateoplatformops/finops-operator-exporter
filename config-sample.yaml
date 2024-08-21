@@ -1,8 +1,8 @@
 apiVersion: finops.krateo.io/v1
 kind: DatabaseConfig
 metadata:
-  name: # config name
-  namespace: default
+  name: # DatabaseConfig name
+  namespace: # DatabaseConfig namespace
 spec:
   host: # host name for the database
   token: # access token
@@ -12,25 +12,21 @@ spec:
 apiVersion: finops.krateo.io/v1
 kind: ExporterScraperConfig
 metadata:
-  labels:
-    app.kubernetes.io/name: exporterscraperconfig
-    app.kubernetes.io/instance: exporterscraperconfig-sample
-    app.kubernetes.io/part-of: operator-exporter
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: operator-exporter
   name: # ExporterScraperConfig name
+  namespace: # ExporterScraperConfig namespace
 spec:
   exporterConfig: # same as krateoplatformops/finops-prometheus-exporter-generic
     provider: 
       name: # name of the provider config
       namespace: # namespace of the provider config
-    url: #url including http/https of the CSV-based API to export, parts with <varName> are taken from additionalVariables: http://<varName> -> http://sample 
-    requireAuthentication: #true/false
-    authenticationMethod: #one of: bearer-token, cert-file
+    url: # url including http/https of the CSV-based API to export, parts with <varName> are taken from additionalVariables: http://<varName> -> http://sample 
+    requireAuthentication: # true/false
+    authenticationMethod: # one of: bearer-token, cert-file
     # bearerToken: # optional, if "authenticationMethod: bearer-token", objectRef to a standard Kubernetes secret with key: bearer-token
     #  name: # secret name
     #  namespace: # secret namespace
-    pollingIntervalHours: #int
+    # metricType: # optional, one of: cost, resource; default value: resource
+    pollingIntervalHours: # int
     additionalVariables:
       varName: sample
       # Variables whose value only contains uppercase letters are taken from environment variables

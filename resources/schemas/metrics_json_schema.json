@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "cost": {
+      "type": "integer"
+    },
+    "timespan": {
+      "type": "string"
+    },
+    "interval": {
+      "type": "string"
+    },
+    "value": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "name": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "localizedValue": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "localizedValue"
+              ]
+            },
+            "displayDescription": {
+              "type": "string"
+            },
+            "unit": {
+              "type": "string"
+            },
+            "timeseries": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "metadatavalues": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "timeStamp": {
+                              "type": "string"
+                            },
+                            "average": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "timeStamp",
+                            "average"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "metadatavalues",
+                    "data"
+                  ]
+                }
+              ]
+            },
+            "errorCode": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "name",
+            "displayDescription",
+            "unit",
+            "timeseries",
+            "errorCode"
+          ]
+        }
+      ]
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "resourceregion": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "cost",
+    "timespan",
+    "interval",
+    "value",
+    "namespace",
+    "resourceregion"
+  ]
+}
