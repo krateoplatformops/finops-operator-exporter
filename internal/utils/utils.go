@@ -23,7 +23,7 @@ func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := repository
-	if strings.Contains(exporterScraperConfig.Spec.ExporterConfig.Url, "@RES:") {
+	if exporterScraperConfig.Spec.ExporterConfig.MetricType == "resource" || exporterScraperConfig.Spec.ExporterConfig.MetricType == "Resource" {
 		imageName += "/finops-prometheus-resource-exporter-azure:latest"
 	} else {
 		imageName += "/finops-prometheus-exporter-generic:latest"
@@ -94,8 +94,6 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 }
 
 func GetGenericExporterConfigMap(exporterScraperConfig finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
-	exporterScraperConfig.Spec.ExporterConfig.Url = strings.Replace(exporterScraperConfig.Spec.ExporterConfig.Url, "@RES:", "", 1)
-
 	yamlData, err := yaml.Marshal(exporterScraperConfig)
 	if err != nil {
 		return &corev1.ConfigMap{}, err

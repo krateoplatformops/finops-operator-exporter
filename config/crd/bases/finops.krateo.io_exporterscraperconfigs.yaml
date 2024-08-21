@@ -47,6 +47,7 @@ spec:
                       type: string
                     type: object
                   authenticationMethod:
+                    pattern: ^(\bcert-file\b)|(\bbearer-token\b)$
                     type: string
                   bearerToken:
                     properties:
@@ -58,6 +59,9 @@ spec:
                     - name
                     - namespace
                     type: object
+                  metricType:
+                    pattern: ^(\b[Cc]ost\b)|(\b[Rr]esource\b)$
+                    type: string
                   pollingIntervalHours:
                     type: integer
                   provider:

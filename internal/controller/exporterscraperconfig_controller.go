@@ -60,6 +60,12 @@ func (r *ExporterScraperConfigReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{Requeue: false}, client.IgnoreNotFound(err)
 	}
 
+	if exporterScraperConfig.Spec.ExporterConfig.MetricType == "" {
+		exporterScraperConfig.Spec.ExporterConfig.MetricType = "cost"
+		r.Update(ctx, &exporterScraperConfig)
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	// Check if a deployment for this configuration already exists
 	existingObjDeployment := &appsv1.Deployment{}
 	ExistingDeploymentNamespace := exporterScraperConfig.Status.ActiveExporter.Namespace
@@ -121,7 +127,6 @@ func (r *ExporterScraperConfigReconciler) createExporterFromScratch(ctx context.
 		}
 	}
 
-	// Create the generic exporter deployment
 	// Create the generic exporter deployment
 	genericExporterDeployment := &appsv1.Deployment{}
 	_ = r.Get(context.Background(), types.NamespacedName{
