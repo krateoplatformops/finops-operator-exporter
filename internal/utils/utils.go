@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
 )
 
@@ -179,7 +180,7 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 		if url == "" {
 			url = "http://" + serviceIp + ":" + strconv.FormatInt(int64(servicePort), 10) + "/metrics"
 		}
-		scraperConfig := &finopsv1.ScraperConfigFromScraperOperator{
+		scraperConfig := &finopsDataTypes.ScraperConfig{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ScraperConfig",
 				APIVersion: "finops.krateo.io/v1",
@@ -196,11 +197,11 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 					},
 				},
 			},
-			Spec: finopsv1.ScraperConfigSpecFromScraperOperator{
+			Spec: finopsDataTypes.ScraperConfigSpec{
 				TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
 				Url:                  url,
 				PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
-				ScraperDatabaseConfigRef: finopsv1.ObjectRef{
+				ScraperDatabaseConfigRef: finopsDataTypes.ObjectRef{
 					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 				},
