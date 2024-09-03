@@ -23,7 +23,9 @@ metadata:
   namespace: # DatabaseConfig namespace
 spec:
   host: # host name for the database
-  token: # access token
+  token: # object reference to secret with key bearer-token
+    name: # secret name
+    namespace: # secret namespace
   clusterName: # generic compute cluster name
   notebookPath: # path to the notebook 
 ---
@@ -58,7 +60,7 @@ spec:
       name: # name of the databaseConfigRef CR 
       namespace: # namespace of the databaseConfigRef CR
 ```
-If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources.
+If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
 The field `provider` is an object reference to a set of CRs that identify, for a given provider, which resources and which additional metrics should be exported and scraped. For example, for the CPU usage of virtual machines on Azure:
 ```yaml
