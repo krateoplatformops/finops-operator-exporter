@@ -198,14 +198,12 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 			Spec: finopsDataTypes.ScraperConfigSpec{
 				TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
 				Url:                  url,
+				MetricType:           exporterScraperConfig.Spec.ExporterConfig.MetricType,
 				PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
 				ScraperDatabaseConfigRef: finopsDataTypes.ObjectRef{
 					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 				},
-			},
-			Status: finopsDataTypes.ScraperConfigStatus{
-				MetricType: exporterScraperConfig.Spec.ExporterConfig.MetricType,
 			},
 		}
 		jsonData, err = json.Marshal(scraperConfig)
