@@ -22,12 +22,11 @@ metadata:
   name: # DatabaseConfig name
   namespace: # DatabaseConfig namespace
 spec:
-  host: # host name for the database
-  token: # object reference to secret with key bearer-token
+  username: # username string
+  passwordSecretRef: # object reference to secret with password
     name: # secret name
     namespace: # secret namespace
-  clusterName: # generic compute cluster name
-  notebookPath: # path to the notebook 
+    key: # secret key
 ---
 apiVersion: finops.krateo.io/v1
 kind: ExporterScraperConfig
@@ -42,9 +41,10 @@ spec:
     url: # url including http/https of the CSV-based API to export, parts with <varName> are taken from additionalVariables: http://<varName> -> http://sample 
     requireAuthentication: # true/false
     authenticationMethod: # one of: bearer-token, cert-file
-    # bearerToken: # optional, if "authenticationMethod: bearer-token", objectRef to a standard Kubernetes secret with key: bearer-token
+    # bearerToken: # optional, if "authenticationMethod: bearer-token", objectRef to a standard Kubernetes secret with specified key
     #  name: # secret name
     #  namespace: # secret namespace
+    #  key: # key of the secret
     # metricType: # optional, one of: cost, resource; default value: resource
     pollingIntervalHours: # int
     additionalVariables:
@@ -113,9 +113,8 @@ $ helm install finops-operator-exporter krateo/finops-operator-exporter
 ```
 
 To start the exporting process, see the examples section. The configuration sample includes the database-config CR.
-The deployment of the operator needs a secret for the repository, called `registry-credentials` in the namespace `finops`.
 
-The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials-default`
+The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
 
 ### Dependencies
 To run this repository in your Kubernetes cluster, you need to have the following images in the same container registry:

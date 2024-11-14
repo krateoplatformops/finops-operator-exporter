@@ -49,16 +49,25 @@ spec:
                     pattern: ^(\bcert-file\b)|(\bbearer-token\b)$
                     type: string
                   bearerToken:
+                    description: A SecretKeySelector is a reference to a secret key
+                      in an arbitrary namespace.
                     properties:
+                      key:
+                        description: The key to select.
+                        type: string
                       name:
+                        description: Name of the referenced object.
                         type: string
                       namespace:
+                        description: Namespace of the referenced object.
                         type: string
                     required:
+                    - key
                     - name
                     - namespace
                     type: object
                   metricType:
+                    default: cost
                     pattern: ^(\b[Cc]ost\b)|(\b[Rr]esource\b)$
                     type: string
                   pollingIntervalHours:
