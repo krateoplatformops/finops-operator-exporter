@@ -18,13 +18,11 @@ import (
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
 )
 
-var repository = strings.TrimSuffix(os.Getenv("REPO"), "/")
-
 func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
-	imageName := repository
-	if exporterScraperConfig.Spec.ExporterConfig.MetricType == "resource" || exporterScraperConfig.Spec.ExporterConfig.MetricType == "Resource" {
+	imageName := strings.TrimSuffix(os.Getenv("REGISTRY"), "/")
+	if strings.ToLower(exporterScraperConfig.Spec.ExporterConfig.MetricType) == "resource" {
 		imageName += "/finops-prometheus-resource-exporter-azure:latest"
 	} else {
 		imageName += "/finops-prometheus-exporter-generic:latest"
@@ -85,7 +83,7 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 					},
 					ImagePullSecrets: []corev1.LocalObjectReference{
 						{
-							Name: "registry-credentials-default",
+							Name: os.Getenv("REGISTRY_CREDENTIALS"),
 						},
 					},
 				},
@@ -205,6 +203,9 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 				},
+			},
+			Status: finopsDataTypes.ScraperConfigStatus{
+				MetricType: exporterScraperConfig.Spec.ExporterConfig.MetricType,
 			},
 		}
 		jsonData, err = json.Marshal(scraperConfig)
