@@ -6,21 +6,12 @@ metadata:
   namespace: finops
 rules:
 - apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - create
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
   - ""
   resources:
   - configmaps
   verbs:
   - create
+  - delete
   - get
   - list
   - update
@@ -30,6 +21,18 @@ rules:
   - services
   verbs:
   - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
   - get
   - list
   - update
@@ -38,6 +41,7 @@ rules:
   - finops.krateo.io
   resources:
   - databaseconfigs
+  - scraperconfigs
   verbs:
   - create
   - get
@@ -67,12 +71,4 @@ rules:
   verbs:
   - get
   - patch
-  - update
-- apiGroups:
-  - finops.krateo.io
-  resources:
-  - scraperconfigs
-  verbs:
-  - create
-  - get
   - update

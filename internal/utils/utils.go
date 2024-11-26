@@ -20,7 +20,7 @@ import (
 
 func Int32Ptr(i int32) *int32 { return &i }
 
-func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
+func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := strings.TrimSuffix(os.Getenv("REGISTRY"), "/")
 	if strings.ToLower(exporterScraperConfig.Spec.ExporterConfig.MetricType) == "resource" {
 		imageName += "/finops-prometheus-resource-exporter-azure:latest"
@@ -28,7 +28,7 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 		imageName += "/finops-prometheus-exporter-generic:latest"
 	}
 
-	return &appsv1.Deployment{
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      exporterScraperConfig.Name + "-deployment",
 			Namespace: exporterScraperConfig.Namespace,
@@ -89,18 +89,20 @@ func GetGenericExporterDeployment(exporterScraperConfig finopsv1.ExporterScraper
 				},
 			},
 		},
-	}, nil
+	}
+	deployment.APIVersion = "apps/v1"
+	return deployment, nil
 }
 
-func GetGenericExporterConfigMap(exporterScraperConfig finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
-	yamlData, err := yaml.Marshal(exporterScraperConfig)
+func GetGenericExporterConfigMap(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
+	yamlData, err := yaml.Marshal(exporterScraperConfig.Spec)
 	if err != nil {
 		return &corev1.ConfigMap{}, err
 	}
 
 	binaryData := make(map[string][]byte)
 	binaryData["config.yaml"] = yamlData
-	return &corev1.ConfigMap{
+	configmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      exporterScraperConfig.Name + "-configmap",
 			Namespace: exporterScraperConfig.Namespace,
@@ -114,13 +116,15 @@ func GetGenericExporterConfigMap(exporterScraperConfig finopsv1.ExporterScraperC
 			},
 		},
 		BinaryData: binaryData,
-	}, nil
+	}
+	configmap.APIVersion = "v1"
+	return configmap, nil
 }
 
-func GetGenericExporterService(exporterScraperConfig finopsv1.ExporterScraperConfig) (*corev1.Service, error) {
+func GetGenericExporterService(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*corev1.Service, error) {
 	labels := make(map[string]string)
 	labels["scraper"] = exporterScraperConfig.Name
-	return &corev1.Service{
+	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      exporterScraperConfig.Name + "-service",
 			Namespace: exporterScraperConfig.Namespace,
@@ -143,11 +147,14 @@ func GetGenericExporterService(exporterScraperConfig finopsv1.ExporterScraperCon
 				},
 			},
 		},
-	}, nil
+	}
+	service.APIVersion = "v1"
+	return service, nil
 }
 
 func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) error {
 	if exporterScraperConfig.Spec.ScraperConfig.TableName == "" &&
+		exporterScraperConfig.Spec.ScraperConfig.MetricType == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours == 0 &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace == "" {
