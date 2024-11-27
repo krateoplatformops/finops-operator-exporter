@@ -95,7 +95,7 @@ func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScrape
 }
 
 func GetGenericExporterConfigMap(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
-	yamlData, err := yaml.Marshal(exporterScraperConfig.Spec)
+	yamlData, err := yaml.Marshal(exporterScraperConfig)
 	if err != nil {
 		return &corev1.ConfigMap{}, err
 	}

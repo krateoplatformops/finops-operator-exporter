@@ -58,7 +58,7 @@ func CheckConfigMap(configMap corev1.ConfigMap, exporterScraperConfig finopsv1.E
 		return false
 	}
 
-	yamlData, err := yaml.Marshal(exporterScraperConfig.Spec)
+	yamlData, err := yaml.Marshal(exporterScraperConfig)
 	if err != nil {
 		return false
 	}

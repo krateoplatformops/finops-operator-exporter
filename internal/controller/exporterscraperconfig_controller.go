@@ -347,9 +347,19 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		Name:      genericExporterService.Name,
 	}
 
-	serviceIp := genericExporterService.Spec.ClusterIP
+	genericExporterServiceUnstructuredCreated, err := clientHelper.GetObj(ctx, &finopsDataTypes.ObjectRef{Name: genericExporterService.Name, Namespace: genericExporterService.Namespace}, "v1", "services", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while getting just created service: %v", err)
+	}
+	genericExporterServiceCreated := &corev1.Service{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(genericExporterServiceUnstructuredCreated.Object, genericExporterServiceCreated)
+	if err != nil {
+		return fmt.Errorf("error while converting unstructured configmap to configmap: %v", err)
+	}
+
+	serviceIp := genericExporterServiceCreated.Spec.ClusterIP
 	servicePort := -1
-	for _, port := range genericExporterService.Spec.Ports {
+	for _, port := range genericExporterServiceCreated.Spec.Ports {
 		servicePort = int(port.TargetPort.IntVal)
 	}
 
