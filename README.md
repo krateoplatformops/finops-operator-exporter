@@ -1,5 +1,6 @@
 # FinOps Operator Exporter
-This repository is part of the wider exporting architecture for the Krateo Composable FinOps and manages the exporting from API endpoints of FOCUS cost reports.
+This repository is part of the wider exporting architecture for the Krateo Composable FinOps and manages the exporting from API endpoints of FOCUS cost reports. 
+Additional information can be read in the summary document [here](resources/Krateo_Composable_FinOps___Full.pdf).
 
 ## Summary
 
@@ -9,7 +10,7 @@ This repository is part of the wider exporting architecture for the Krateo Compo
 4. [Configuration](#configuration)
 
 ## Overview
-This component is tasked with the creation of a generic exporting pipeline, according to the description given in a Custom Resource (CR). After the creation of the CR, the operator reads the "exporting" configuration and creates three resources: a deployment with a generic prometheus exporter inside, a configmap containing the configuration and a service that exposes the prometheus metrics. The given endpoint is supposed to be a CSV file containing a FOCUS report. Then, it creates a new CR for the FinOps Operator Scraper, which starts a generic scraper that scrapes the data and uploads it to a database.
+This finops-operator-exporter is tasked with the creation of a generic exporting pipeline, according to the description given in a Custom Resource (CR). After the creation of the CR, the operator reads the "exporting" configuration and creates three resources: a deployment with a generic prometheus exporter inside, a configmap containing the configuration and a service that exposes the deployment. The given endpoint is supposed to be a CSV file containing a FOCUS report. Then, it creates a new CR for the FinOps Operator Scraper, which starts a generic scraper to upload the data to a database.
 
 ## Architecture
 ![Krateo Composable FinOps Operator Exporter](resources/images/KCF-operator-exporter.png)
@@ -62,7 +63,7 @@ spec:
 ```
 If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
-The field `provider` is an object reference to a set of CRs that identify, for a given provider, which resources and which additional metrics should be exported and scraped. For example, for the CPU usage of virtual machines on Azure:
+The CR can be configured to include a `provider`, which is an object reference to a set of CRs that identify, for a given provider, which resources and which additional metrics should be exported and scraped. For example, for the CPU usage of virtual machines on Azure:
 ```yaml
 apiVersion: finops.krateo.io/v1
 kind: ProviderConfig
@@ -97,8 +98,13 @@ spec:
   timespan: month
   interval: PT15M
 ```
+For these metrics, the exporting/scraping pipeline is automatically started and the field `metricType` is automatically populated.
 
 ## Configuration
+To start the exporting process, see the examples section. The configuration sample includes the database-config CR.
+
+The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
+
 ### Prerequisites
 - go version v1.21.0+
 - docker version 17.03+.
@@ -106,24 +112,17 @@ spec:
 - Access to a Kubernetes v1.11.3+ cluster.
 
 ### Installation with HELM
-```sh
-$ helm repo add krateo https://charts.krateo.io
-$ helm repo update krateo
-$ helm install finops-operator-exporter krateo/finops-operator-exporter
-```
-
-To start the exporting process, see the examples section. The configuration sample includes the database-config CR.
-
-The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
+The operator can be installed through its [Helm chart](https://github.com/krateoplatformops/finops-operator-exporter-chart).
 
 ### Dependencies
-To run this repository in your Kubernetes cluster, you need to have the following images in the same container registry:
+To run this repository in your Kubernetes cluster, you need to install the following Krateo Composable FinOps components
  - prometheus-exporter-generic
  - prometheus-scraper-generic
  - operator-scraper
  - prometheus-resource-exporter-azure
+ - finops-database-handler
 
-There is also the need to have an active Databricks cluster, with SQL warehouse and notebooks configured. Its login details must be placed in the database-config CR.
+Additionally, you need to have a working CrateDB instance to store the scraped data.
 
 ### Bearer-token for Azure
 In order to invoke Azure API, the exporter needs to be authenticated first. In the current implementation, it utilizes the Azure REST API, which require the bearer-token for authentication. For each target Azure subscription, an application needs to be registered and assigned with the Cost Management Reader role.
