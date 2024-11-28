@@ -1,6 +1,6 @@
 # FinOps Operator Exporter
 This repository is part of the wider exporting architecture for the Krateo Composable FinOps and manages the exporting from API endpoints of FOCUS cost reports. 
-Additional information can be read in the summary document [here](resources/Krateo_Composable_FinOps___Full.pdf)
+Additional information can be read in the summary document [here](resources/Krateo_Composable_FinOps___Full.pdf).
 
 ## Summary
 
