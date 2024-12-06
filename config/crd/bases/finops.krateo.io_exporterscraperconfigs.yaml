@@ -89,7 +89,6 @@ spec:
                   urlParsed:
                     type: string
                 required:
-                - additionalVariables
                 - pollingIntervalHours
                 - requireAuthentication
                 - url
