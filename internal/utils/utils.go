@@ -94,7 +94,16 @@ func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScrape
 	return deployment, nil
 }
 
-func GetGenericExporterConfigMap(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
+func GetGenericExporterConfigMap(exporterScraperConfigComplete *finopsv1.ExporterScraperConfig) (*corev1.ConfigMap, error) {
+	exporterScraperConfig := &finopsv1.ExporterScraperConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      exporterScraperConfigComplete.ObjectMeta.Name,
+			Namespace: exporterScraperConfigComplete.ObjectMeta.Namespace,
+			UID:       exporterScraperConfigComplete.ObjectMeta.UID,
+		},
+		TypeMeta: exporterScraperConfigComplete.TypeMeta,
+		Spec:     exporterScraperConfigComplete.Spec,
+	}
 	yamlData, err := yaml.Marshal(exporterScraperConfig)
 	if err != nil {
 		return &corev1.ConfigMap{}, err
