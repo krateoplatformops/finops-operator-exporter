@@ -63,6 +63,8 @@ spec:
 ```
 If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
+The field `spec.scraperConfig.url` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
+
 The CR can be configured to include a `provider`, which is an object reference to a set of CRs that identify, for a given provider, which resources and which additional metrics should be exported and scraped. For example, for the CPU usage of virtual machines on Azure:
 ```yaml
 apiVersion: finops.krateo.io/v1
@@ -104,6 +106,11 @@ For these metrics, the exporting/scraping pipeline is automatically started and 
 To start the exporting process, see the examples section. The configuration sample includes the database-config CR.
 
 The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
+
+The FOCUS data needs to be in the CSV format and the `Tags` column has to use the following format:
+```
+{"CostCenter": "1234","Cost department": "Marketing","env": "prod","org": "trey","Project": "Foo"}
+```
 
 ### Prerequisites
 - go version v1.21.0+

@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func CheckService(service corev1.Service, exporterScraperConfig finopsv1.ExporterScraperConfig) bool {
@@ -17,6 +18,7 @@ func CheckService(service corev1.Service, exporterScraperConfig finopsv1.Exporte
 
 	ownerReferencesLive := service.OwnerReferences
 	if len(ownerReferencesLive) != 1 {
+		log.Logger.Debug().Msg("Owner reference length not one")
 		return false
 	}
 
@@ -25,10 +27,12 @@ func CheckService(service corev1.Service, exporterScraperConfig finopsv1.Exporte
 	}
 
 	if service.Spec.Type != corev1.ServiceTypeNodePort {
+		log.Logger.Debug().Msg("service type wrong")
 		return false
 	}
 
 	if len(service.Spec.Ports) == 0 {
+		log.Logger.Debug().Msg("service ports number wrong")
 		return false
 	} else {
 		found := false
@@ -38,6 +42,7 @@ func CheckService(service corev1.Service, exporterScraperConfig finopsv1.Exporte
 			}
 		}
 		if !found {
+			log.Logger.Debug().Msg("service port range wrong")
 			return false
 		}
 	}
@@ -46,16 +51,27 @@ func CheckService(service corev1.Service, exporterScraperConfig finopsv1.Exporte
 		ownerReferencesLive[0].Name != exporterScraperConfig.Name ||
 		ownerReferencesLive[0].UID != exporterScraperConfig.UID ||
 		ownerReferencesLive[0].APIVersion != exporterScraperConfig.APIVersion {
+		log.Logger.Debug().Msg("Owner reference wrong")
 		return false
 	}
 
 	return true
 }
 
-func CheckConfigMap(configMap corev1.ConfigMap, exporterScraperConfig finopsv1.ExporterScraperConfig) bool {
-	if configMap.Name != exporterScraperConfig.Name+"-configmap" {
-		log.Logger.Info().Msg("name wrong")
+func CheckConfigMap(configMap corev1.ConfigMap, exporterScraperConfigComplete finopsv1.ExporterScraperConfig) bool {
+	if configMap.Name != exporterScraperConfigComplete.Name+"-configmap" {
+		log.Logger.Debug().Msg("name wrong")
 		return false
+	}
+
+	exporterScraperConfig := &finopsv1.ExporterScraperConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      exporterScraperConfigComplete.ObjectMeta.Name,
+			Namespace: exporterScraperConfigComplete.ObjectMeta.Namespace,
+			UID:       exporterScraperConfigComplete.ObjectMeta.UID,
+		},
+		TypeMeta: exporterScraperConfigComplete.TypeMeta,
+		Spec:     exporterScraperConfigComplete.Spec,
 	}
 
 	yamlData, err := yaml.Marshal(exporterScraperConfig)
@@ -65,17 +81,19 @@ func CheckConfigMap(configMap corev1.ConfigMap, exporterScraperConfig finopsv1.E
 
 	if yamlDataFromLive, ok := configMap.BinaryData["config.yaml"]; ok {
 		if strings.Replace(string(yamlData), " ", "", -1) != strings.Replace(string(yamlDataFromLive), " ", "", -1) {
-			log.Logger.Info().Msg("bytes different")
+			log.Logger.Debug().Msg("bytes different")
+			log.Logger.Debug().Msg(string(yamlDataFromLive))
+			log.Logger.Debug().Msg(string(yamlData))
 			return false
 		}
 	} else {
-		log.Logger.Info().Msg("config.yaml not in map")
+		log.Logger.Debug().Msg("config.yaml not in map")
 		return false
 	}
 
 	ownerReferencesLive := configMap.OwnerReferences
 	if len(ownerReferencesLive) != 1 {
-		log.Logger.Info().Msg("owner len not 1")
+		log.Logger.Debug().Msg("Owner reference length not one")
 		return false
 	}
 
@@ -83,7 +101,7 @@ func CheckConfigMap(configMap corev1.ConfigMap, exporterScraperConfig finopsv1.E
 		ownerReferencesLive[0].Name != exporterScraperConfig.Name ||
 		ownerReferencesLive[0].UID != exporterScraperConfig.UID ||
 		ownerReferencesLive[0].APIVersion != exporterScraperConfig.APIVersion {
-		log.Logger.Info().Msg("owner wrong")
+		log.Logger.Debug().Msg("owner reference wrong")
 		return false
 	}
 

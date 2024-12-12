@@ -5,17 +5,24 @@ go 1.23.0
 toolchain go1.23.2
 
 require (
-	github.com/krateoplatformops/finops-data-types v0.0.0-20241206125906-b334d2f82ff2
+	github.com/krateoplatformops/finops-data-types v0.0.0-20241212193013-e4acc1b215ca
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 	k8s.io/apimachinery v0.31.3
-	k8s.io/client-go v0.31.0
+	k8s.io/client-go v0.31.1
 	sigs.k8s.io/controller-runtime v0.19.0
 )
 
 require (
+	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/moby/spdystream v0.4.0 // indirect
+	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
+	github.com/vladimirvivien/gexe v0.3.0 // indirect
+	k8s.io/component-base v0.31.1 // indirect
+	sigs.k8s.io/e2e-framework v0.5.0 // indirect
 )
 
 require (
@@ -46,7 +53,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
