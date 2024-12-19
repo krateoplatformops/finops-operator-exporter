@@ -1,5 +1,3 @@
-# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=krateo-finops-registry.westeurope.cloudapp.azure.com/resource-tree-handler --set image.tag=0.3.1 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=krateo-finops-registry.westeurope.cloudapp.azure.com --dry-run
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,6 +36,7 @@ spec:
     port: 8080
     targetPort: 8080
 ---
+# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=krateo-finops-registry.westeurope.cloudapp.azure.com/finops-operator-exporter --set image.tag=0.3.1 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=krateo-finops-registry.westeurope.cloudapp.azure.com --dry-run
 # Source: finops-operator-exporter/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
