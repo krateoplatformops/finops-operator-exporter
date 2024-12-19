@@ -20,8 +20,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 	"sigs.k8s.io/e2e-framework/support/kind"
 
-	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
-	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
+	operatorexporterapi "github.com/krateoplatformops/finops-operator-exporter/api/v1"
 	"github.com/krateoplatformops/finops-operator-exporter/internal/helpers/kube/comparators"
 	"github.com/krateoplatformops/finops-operator-exporter/internal/utils"
 )
@@ -37,6 +36,7 @@ const (
 	crdsPath1       = "../../config/crd/bases"
 	crdsPath2       = "./manifests/crds"
 	deploymentsPath = "./manifests/deployments"
+	toTest          = "./manifests/to_test/"
 
 	testName = "exporterscraperconfig-sample"
 )
@@ -67,7 +67,6 @@ func TestMain(m *testing.M) {
 
 func TestExporter(t *testing.T) {
 	controllerCreationSig := make(chan bool, 2)
-	t.Log("pizza")
 	create := features.New("Create").
 		WithLabel("type", "CR and resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
@@ -75,7 +74,7 @@ func TestExporter(t *testing.T) {
 			if err != nil {
 				t.Fail()
 			}
-			finopsv1.AddToScheme(r.GetScheme())
+			operatorexporterapi.AddToScheme(r.GetScheme())
 			r.WithNamespace(testNamespace)
 
 			ctx = context.WithValue(ctx, contextKey("client"), r)
@@ -89,41 +88,13 @@ func TestExporter(t *testing.T) {
 				t.Fatalf("Failed due to error: %s", err)
 			}
 
-			crE := finopsv1.ExporterScraperConfig{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "ExporterScraperConfig",
-					APIVersion: "finops.krateo.io/v1",
-				},
-				ObjectMeta: v1.ObjectMeta{
-					Name:      testName,
-					Namespace: testNamespace,
-				},
-				Spec: finopsDataTypes.ExporterScraperConfigSpec{
-					ExporterConfig: finopsDataTypes.ExporterConfigSpec{
-						Url:                   "http://<host>:<port>/subscriptions/<subscription_id>/providers/Microsoft.Consumption/usageDetails",
-						RequireAuthentication: false,
-						MetricType:            "cost",
-						PollingIntervalHours:  1,
-						AdditionalVariables: map[string]string{
-							"host": "WEBSERVICE_API_MOCK_SERVICE_HOST",
-							"port": "WEBSERVICE_API_MOCK_SERVICE_PORT",
-						},
-					},
-					ScraperConfig: finopsDataTypes.ScraperConfigSpec{
-						PollingIntervalHours: 1,
-						TableName:            "testfocus",
-						ScraperDatabaseConfigRef: finopsDataTypes.ObjectRef{
-							Name:      "cratedb-config",
-							Namespace: testNamespace,
-						},
-					},
-				},
-			}
-
-			// Create Custom Resource for FinOps Operator Exporter
-			err = r.Create(ctx, &crE)
+			err = decoder.DecodeEachFile(
+				ctx, os.DirFS(toTest), "*",
+				decoder.CreateHandler(r),
+				decoder.MutateNamespace(testNamespace),
+			)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed due to error: %s", err)
 			}
 
 			if err := wait.For(
@@ -139,7 +110,7 @@ func TestExporter(t *testing.T) {
 		Assess("CR", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r := ctx.Value(contextKey("client")).(*resources.Resources)
 
-			crGet := &finopsv1.ExporterScraperConfig{}
+			crGet := &operatorexporterapi.ExporterScraperConfig{}
 			err := r.Get(ctx, testName, testNamespace, crGet)
 			if err != nil {
 				t.Fatal(err)
@@ -187,7 +158,7 @@ func TestExporter(t *testing.T) {
 			if err != nil {
 				t.Fail()
 			}
-			finopsv1.AddToScheme(r.GetScheme())
+			operatorexporterapi.AddToScheme(r.GetScheme())
 			r.WithNamespace(testNamespace)
 
 			ctx = context.WithValue(ctx, contextKey("client"), r)
@@ -268,7 +239,7 @@ func TestExporter(t *testing.T) {
 			if err != nil {
 				t.Fail()
 			}
-			finopsv1.AddToScheme(r.GetScheme())
+			operatorexporterapi.AddToScheme(r.GetScheme())
 			r.WithNamespace(testNamespace)
 
 			ctx = context.WithValue(ctx, contextKey("client"), r)
@@ -278,7 +249,7 @@ func TestExporter(t *testing.T) {
 		Assess("Deployment", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r := ctx.Value(contextKey("client")).(*resources.Resources)
 
-			exporterScraperConfig := &finopsv1.ExporterScraperConfig{}
+			exporterScraperConfig := &operatorexporterapi.ExporterScraperConfig{}
 			err := r.Get(ctx, testName, testNamespace, exporterScraperConfig)
 			if err != nil {
 				t.Fatal(err)
@@ -316,7 +287,7 @@ func TestExporter(t *testing.T) {
 		Assess("ConfigMap", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r := ctx.Value(contextKey("client")).(*resources.Resources)
 
-			exporterScraperConfig := &finopsv1.ExporterScraperConfig{}
+			exporterScraperConfig := &operatorexporterapi.ExporterScraperConfig{}
 			err := r.Get(ctx, testName, testNamespace, exporterScraperConfig)
 			if err != nil {
 				t.Fatal(err)
@@ -354,7 +325,7 @@ func TestExporter(t *testing.T) {
 		Assess("Service", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r := ctx.Value(contextKey("client")).(*resources.Resources)
 
-			exporterScraperConfig := &finopsv1.ExporterScraperConfig{}
+			exporterScraperConfig := &operatorexporterapi.ExporterScraperConfig{}
 			err := r.Get(ctx, testName, testNamespace, exporterScraperConfig)
 			if err != nil {
 				t.Fatal(err)
