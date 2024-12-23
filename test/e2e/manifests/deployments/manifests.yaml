@@ -36,7 +36,7 @@ spec:
     port: 8080
     targetPort: 8080
 ---
-# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=krateo-finops-registry.westeurope.cloudapp.azure.com/finops-operator-exporter --set image.tag=0.3.1 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=krateo-finops-registry.westeurope.cloudapp.azure.com --dry-run
+# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=ghcr.io/krateoplatformops/finops-operator-exporter --set image.tag=0.3.2 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=ghcr.io/krateoplatformops --dry-run
 # Source: finops-operator-exporter/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -48,7 +48,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
   annotations:
     {}
 ---
@@ -60,7 +60,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
   annotations:
     {}
 ---
@@ -72,7 +72,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
   annotations:
     {}
 ---
@@ -84,11 +84,11 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 data:
   MAX_RECONCILE_RATE: "1"
   POLLING_INTERVAL: "300"
-  REGISTRY: "krateo-finops-registry.westeurope.cloudapp.azure.com"
+  REGISTRY: "ghcr.io/krateoplatformops"
   REGISTRY_CREDENTIALS: "registry-credentials"
 ---
 # Source: finops-operator-exporter/templates/role.yaml
@@ -102,7 +102,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 rules:
 - apiGroups:
   - ""
@@ -144,7 +144,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 rules:
 - apiGroups:
   - apps
@@ -229,7 +229,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 rules:
 - apiGroups:
   - finops.krateo.io
@@ -247,7 +247,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 rules:
 - apiGroups:
   - finops.krateo.io
@@ -275,7 +275,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -296,7 +296,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -314,7 +314,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -332,7 +332,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -353,7 +353,7 @@ metadata:
     control-plane: controller-manager
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.1"
+    app.kubernetes.io/version: "0.3.2"
 spec:
   replicas: 1
   selector:
@@ -386,7 +386,7 @@ spec:
         envFrom:
         - configMapRef:
             name: finops-operator-exporter-repo-envvar
-        image: krateo-finops-registry.westeurope.cloudapp.azure.com/finops-operator-exporter:0.3.1
+        image: ghcr.io/krateoplatformops/finops-operator-exporter:0.3.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
