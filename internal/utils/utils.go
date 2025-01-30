@@ -22,10 +22,12 @@ func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := strings.TrimSuffix(os.Getenv("REGISTRY"), "/")
+	imageVersion := strings.TrimSuffix(os.Getenv("EXPORTER_VERSION"), "latest")
+	resourceImageVersion := strings.TrimSuffix(os.Getenv("RESOURCE_EXPORTER_VERSION"), "latest")
 	if strings.ToLower(exporterScraperConfig.Spec.ExporterConfig.MetricType) == "resource" {
-		imageName += "/finops-prometheus-resource-exporter-azure:latest"
+		imageName += "/finops-prometheus-resource-exporter-azure: " + resourceImageVersion
 	} else {
-		imageName += "/finops-prometheus-exporter-generic:latest"
+		imageName += "/finops-prometheus-exporter-generic:" + imageVersion
 	}
 
 	deployment := &appsv1.Deployment{
