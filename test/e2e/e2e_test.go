@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -148,6 +149,15 @@ func TestExporter(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			crGet := &operatorexporterapi.ExporterScraperConfig{}
+			err = r.Get(ctx, testName, testNamespace, crGet)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if crGet.Status.ActiveExporter.Name == "" || crGet.Status.ConfigMap.Name == "" || crGet.Status.Service.Name == "" {
+				t.Fatal(fmt.Errorf("missing status update"))
+			}
 			return ctx
 		}).Feature()
 
