@@ -36,7 +36,231 @@ spec:
     port: 8080
     targetPort: 8080
 ---
-# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=ghcr.io/krateoplatformops/finops-operator-exporter --set image.tag=0.3.2 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=ghcr.io/krateoplatformops --dry-run
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.5
+  name: scraperconfigs.finops.krateo.io
+spec:
+  group: finops.krateo.io
+  names:
+    kind: ScraperConfig
+    listKind: ScraperConfigList
+    plural: scraperconfigs
+    singular: scraperconfig
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: ScraperConfig is the Schema for the scraperconfigs API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              api:
+                description: API represents a request to an HTTP service
+                properties:
+                  endpointRef:
+                    description: EndpointRef a reference to an Endpoint
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  headers:
+                    description: Headers is an array of custom request headers
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  path:
+                    description: Path is the request URI path
+                    type: string
+                  payload:
+                    description: Payload is the request body
+                    type: string
+                  verb:
+                    description: Verb is the request method (GET if omitted)
+                    type: string
+                type: object
+              metricType:
+                default: cost
+                type: string
+              pollingIntervalHours:
+                type: integer
+              scraperDatabaseConfigRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              tableName:
+                type: string
+            required:
+            - pollingIntervalHours
+            - scraperDatabaseConfigRef
+            - tableName
+            type: object
+          status:
+            properties:
+              active:
+                description: ObjectReference contains enough information to let you
+                  inspect or modify the referred object.
+                properties:
+                  apiVersion:
+                    description: API version of the referent.
+                    type: string
+                  fieldPath:
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                    type: string
+                  kind:
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    type: string
+                  name:
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                    type: string
+                  resourceVersion:
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                    type: string
+                  uid:
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              configMaps:
+                description: ObjectReference contains enough information to let you
+                  inspect or modify the referred object.
+                properties:
+                  apiVersion:
+                    description: API version of the referent.
+                    type: string
+                  fieldPath:
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                    type: string
+                  kind:
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    type: string
+                  name:
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                    type: string
+                  resourceVersion:
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                    type: string
+                  uid:
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=ghcr.io/krateoplatformops/finops-operator-exporter --set image.tag=0.4.0 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=ghcr.io/krateoplatformops --dry-run
 # Source: finops-operator-exporter/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -48,7 +272,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
   annotations:
     {}
 ---
@@ -60,7 +284,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
   annotations:
     {}
 ---
@@ -72,7 +296,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
   annotations:
     {}
 ---
@@ -84,12 +308,13 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 data:
   MAX_RECONCILE_RATE: "1"
   POLLING_INTERVAL: "300"
   REGISTRY: "ghcr.io/krateoplatformops"
   REGISTRY_CREDENTIALS: "registry-credentials"
+  EXPORTER_VERSION: 0.4.0
 ---
 # Source: finops-operator-exporter/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -102,7 +327,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 rules:
 - apiGroups:
   - ""
@@ -144,7 +369,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 rules:
 - apiGroups:
   - apps
@@ -161,6 +386,7 @@ rules:
   - ""
   resources:
   - configmaps
+  - secrets
   verbs:
   - create
   - delete
@@ -229,7 +455,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 rules:
 - apiGroups:
   - finops.krateo.io
@@ -247,7 +473,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 rules:
 - apiGroups:
   - finops.krateo.io
@@ -275,7 +501,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -296,7 +522,7 @@ metadata:
     app.kubernetes.io/part-of: operator-exporter
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -314,7 +540,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -332,7 +558,7 @@ metadata:
   labels:
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -353,7 +579,7 @@ metadata:
     control-plane: controller-manager
     app.kubernetes.io/name: finops-operator-exporter
     app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.3.2"
+    app.kubernetes.io/version: "0.4.0"
 spec:
   replicas: 1
   selector:
@@ -386,7 +612,7 @@ spec:
         envFrom:
         - configMapRef:
             name: finops-operator-exporter-repo-envvar
-        image: ghcr.io/krateoplatformops/finops-operator-exporter:0.3.2
+        image: ghcr.io/krateoplatformops/finops-operator-exporter:0.4.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

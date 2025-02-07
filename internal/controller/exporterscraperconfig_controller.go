@@ -56,8 +56,9 @@ const (
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=scraperconfigs,verbs=get;create;update
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=databaseconfigs,verbs=get;create;update
 //+kubebuilder:rbac:groups=apps,namespace=finops,resources=deployments,verbs=get;create;delete;list;update;watch
-//+kubebuilder:rbac:groups=core,namespace=finops,resources=configmaps,verbs=get;create;delete;list;update
+//+kubebuilder:rbac:groups=core,namespace=finops,resources=configmaps,verbs=get;create;delete;list;update;watch
 //+kubebuilder:rbac:groups=core,namespace=finops,resources=services,verbs=get;create;delete;list;update;watch
+//+kubebuilder:rbac:groups=core,namespace=finops,resources=secrets,verbs=get;create;delete;list;update;watch
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := reconciler.ControllerName(finopsv1.GroupKind)
@@ -347,6 +348,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		Name:      genericExporterService.Name,
 	}
 
+	// Get the service to know on which port it created the service
 	genericExporterServiceUnstructuredCreated, err := clientHelper.GetObj(ctx, &finopsDataTypes.ObjectRef{Name: genericExporterService.Name, Namespace: genericExporterService.Namespace}, "v1", "services", dynClient)
 	if err != nil {
 		return fmt.Errorf("error while getting just created service: %v", err)
@@ -354,7 +356,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	genericExporterServiceCreated := &corev1.Service{}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(genericExporterServiceUnstructuredCreated.Object, genericExporterServiceCreated)
 	if err != nil {
-		return fmt.Errorf("error while converting unstructured configmap to configmap: %v", err)
+		return fmt.Errorf("error while converting unstructured service to service: %v", err)
 	}
 
 	serviceIp := genericExporterServiceCreated.Spec.ClusterIP
@@ -366,7 +368,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	// Create the CR to start the Scraper Operator
 	err = utils.CreateScraperCR(ctx, *exporterScraperConfig, serviceIp, servicePort)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while creating the scraper cr: %v", err)
 	}
 
 	exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)

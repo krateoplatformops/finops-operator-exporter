@@ -1,6 +1,5 @@
 # FinOps Operator Exporter
 This repository is part of the wider exporting architecture for the Krateo Composable FinOps and manages the exporting from API endpoints of FOCUS cost reports. 
-Additional information can be read in the summary document [here](resources/Krateo_Composable_FinOps___Full.pdf).
 
 ## Summary
 
@@ -39,23 +38,22 @@ spec:
     provider: 
       name: # name of the provider config
       namespace: # namespace of the provider config
-    url: # url including http/https of the CSV-based API to export, parts with <varName> are taken from additionalVariables: http://<varName> -> http://sample 
-    requireAuthentication: # true/false
-    authenticationMethod: # one of: bearer-token, cert-file
-    # bearerToken: # optional, if "authenticationMethod: bearer-token", objectRef to a standard Kubernetes secret with specified key
-    #  name: # secret name
-    #  namespace: # secret namespace
-    #  key: # key of the secret
-    # metricType: # optional, one of: cost, resource; default value: resource
+    api: # the API to call
+      path: # the path inside the domain
+      method: GET # the method to call the API with
+      endpointRef: # secret with the url in the format http(s)://host:port, it can contain variables, such as http://<varName>.com:<envExample>, which will be compiled with the additionalVariables fields
+        name: 
+        namespace:
+    # metricType: # optional, one of: cost, resource; default value: cost
     pollingIntervalHours: # int
     additionalVariables:
       varName: sample
       # Variables whose value only contains uppercase letters are taken from environment variables
-      # FROM_THE_ENVIRONMENT must be the name of an environment variable inside the target exporter container
+      # FROM_THE_ENVIRONMENT must be the name of an environment variable inside the target exporter container (e.g., kubernetes services)
       envExample: FROM_THE_ENVIRONMENT
-  scraperConfig: # configuration for krateoplatformops/finops-operator-scraper
+  scraperConfig: # same fields as krateoplatformops/finops-prometheus-scraper-generic
     tableName: # tableName in the database to upload the data to
-    # url: # path to the exporter, optional (if missing, its taken from the exporter)
+    # api: # api to the exporter, optional (if missing, it uses the exporter)
     pollingIntervalHours: # int
     scraperDatabaseConfigRef: # See above kind DatabaseConfig
       name: # name of the databaseConfigRef CR 
@@ -63,7 +61,7 @@ spec:
 ```
 If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
-The field `spec.scraperConfig.url` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
+The field `spec.scraperConfig.api` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
 
 The CR can be configured to include a `provider`, which is an object reference to a set of CRs that identify, for a given provider, which resources and which additional metrics should be exported and scraped. For example, for the CPU usage of virtual machines on Azure:
 ```yaml
