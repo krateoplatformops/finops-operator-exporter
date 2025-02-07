@@ -14,8 +14,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
+	finopsdatatypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
+	secretHelper "github.com/krateoplatformops/finops-operator-exporter/internal/helpers/kube/secrets"
 )
 
 func Int32Ptr(i int32) *int32 { return &i }
@@ -189,14 +190,29 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 		Name(exporterScraperConfig.Name + "-scraper").
 		DoRaw(context.TODO())
 
+	var api finopsdatatypes.API
+	if exporterScraperConfig.Spec.ScraperConfig.API.EndpointRef == nil {
+		url := "http://" + serviceIp + ":" + strconv.FormatInt(int64(servicePort), 10)
+		err = createEndpointRef(exporterScraperConfig.Name, exporterScraperConfig.Namespace, url)
+		if err != nil {
+			return err
+		}
+		api = finopsdatatypes.API{
+			Path: "/metrics",
+			Verb: "GET",
+			EndpointRef: &finopsdatatypes.ObjectRef{
+				Name:      exporterScraperConfig.Name,
+				Namespace: exporterScraperConfig.Namespace,
+			},
+		}
+	} else {
+		api = exporterScraperConfig.Spec.ScraperConfig.API
+	}
+
 	var crdResponse CRDResponse
 	_ = json.Unmarshal(jsonData, &crdResponse)
 	if crdResponse.Status == "Failure" {
-		url := exporterScraperConfig.Spec.ScraperConfig.Url
-		if url == "" {
-			url = "http://" + serviceIp + ":" + strconv.FormatInt(int64(servicePort), 10) + "/metrics"
-		}
-		scraperConfig := &finopsDataTypes.ScraperConfig{
+		scraperConfig := &finopsdatatypes.ScraperConfig{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ScraperConfig",
 				APIVersion: "finops.krateo.io/v1",
@@ -213,12 +229,12 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 					},
 				},
 			},
-			Spec: finopsDataTypes.ScraperConfigSpec{
+			Spec: finopsdatatypes.ScraperConfigSpec{
 				TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
-				Url:                  url,
+				API:                  api,
 				MetricType:           exporterScraperConfig.Spec.ExporterConfig.MetricType,
 				PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
-				ScraperDatabaseConfigRef: finopsDataTypes.ObjectRef{
+				ScraperDatabaseConfigRef: finopsdatatypes.ObjectRef{
 					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 				},
@@ -241,6 +257,24 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 		}
 	}
 	return nil
+}
+
+func createEndpointRef(name, namespace, url string) error {
+	secretToCreate := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			"server-url": url,
+		},
+	}
+
+	return secretHelper.Create(context.TODO(), secretToCreate)
 }
 
 type CRDResponse struct {
