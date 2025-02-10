@@ -26,7 +26,7 @@ func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScrape
 	imageVersion := strings.TrimSuffix(os.Getenv("EXPORTER_VERSION"), "latest")
 	resourceImageVersion := strings.TrimSuffix(os.Getenv("RESOURCE_EXPORTER_VERSION"), "latest")
 	if strings.ToLower(exporterScraperConfig.Spec.ExporterConfig.MetricType) == "resource" {
-		imageName += "/finops-prometheus-resource-exporter-azure: " + resourceImageVersion
+		imageName += "/finops-prometheus-resource-exporter-azure:" + resourceImageVersion
 	} else {
 		imageName += "/finops-prometheus-exporter-generic:" + imageVersion
 	}
@@ -193,7 +193,7 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 	var api finopsdatatypes.API
 	if exporterScraperConfig.Spec.ScraperConfig.API.EndpointRef == nil {
 		url := "http://" + serviceIp + ":" + strconv.FormatInt(int64(servicePort), 10)
-		err = createEndpointRef(exporterScraperConfig.Name, exporterScraperConfig.Namespace, url)
+		err = createEndpointRef(exporterScraperConfig, url)
 		if err != nil {
 			return err
 		}
@@ -259,15 +259,23 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 	return nil
 }
 
-func createEndpointRef(name, namespace, url string) error {
+func createEndpointRef(exporterScraperConfig finopsv1.ExporterScraperConfig, url string) error {
 	secretToCreate := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      exporterScraperConfig.Name,
+			Namespace: exporterScraperConfig.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: exporterScraperConfig.APIVersion,
+					Kind:       exporterScraperConfig.Kind,
+					Name:       exporterScraperConfig.Name,
+					UID:        exporterScraperConfig.UID,
+				},
+			},
 		},
 		StringData: map[string]string{
 			"server-url": url,
