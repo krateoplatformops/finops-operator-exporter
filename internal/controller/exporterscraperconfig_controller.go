@@ -330,7 +330,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		}
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
 		if err != nil {
-			return fmt.Errorf("error while converting unstructured service to service: %v", err)
+			return fmt.Errorf("error while converting unstructured configmap to configmap: %v", err)
 		}
 	}
 
@@ -365,7 +365,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		}
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
 		if err != nil {
-			return fmt.Errorf("error while converting unstructured service to service: %v", err)
+			return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
 		}
 	}
 
