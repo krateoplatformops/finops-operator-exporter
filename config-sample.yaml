@@ -22,7 +22,7 @@ spec:
       namespace: # namespace of the provider config
     api: # the API to call
       path: # the path inside the domain
-      method: GET # the method to call the API with
+      verb: GET # the method to call the API with
       endpointRef: # secret with the url in the format http(s)://host:port, it can contain variables, such as http://<varName>.com:<envExample>, which will be compiled with the additionalVariables fields
         name: 
         namespace:
