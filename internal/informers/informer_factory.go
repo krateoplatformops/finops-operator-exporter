@@ -185,7 +185,6 @@ func (r *InformerFactory) getConfigurationCR(ctx context.Context, name string, n
 }
 
 func (r *InformerFactory) createRestoreObject(ctx context.Context, exporterScraperConfig *finopsv1.ExporterScraperConfig, objectToRestoreKind string, create bool) error {
-	// Switch su kind
 	var err error
 	var genericObjectUnstructured *unstructured.Unstructured
 	var resource string
