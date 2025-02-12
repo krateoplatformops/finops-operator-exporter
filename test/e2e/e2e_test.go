@@ -235,6 +235,14 @@ func TestExporter(t *testing.T) {
 	delete := features.New("Delete").
 		WithLabel("type", "Resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			r, err := resources.New(c.Client().RESTConfig())
+			if err != nil {
+				t.Fail()
+			}
+			operatorexporterapi.AddToScheme(r.GetScheme())
+			r.WithNamespace(testNamespace)
+
+			ctx = context.WithValue(ctx, contextKey("client"), r)
 			return ctx
 		}).
 		Assess("Deployment", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -307,6 +315,14 @@ func TestExporter(t *testing.T) {
 	modify := features.New("Modify").
 		WithLabel("type", "Resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			r, err := resources.New(c.Client().RESTConfig())
+			if err != nil {
+				t.Fail()
+			}
+			operatorexporterapi.AddToScheme(r.GetScheme())
+			r.WithNamespace(testNamespace)
+
+			ctx = context.WithValue(ctx, contextKey("client"), r)
 			return ctx
 		}).
 		Assess("Deployment", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
