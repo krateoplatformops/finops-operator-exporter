@@ -48,7 +48,6 @@ type contextKey string
 
 var (
 	testenv env.Environment
-	scheme  = runtime.NewScheme()
 )
 
 const (
@@ -59,13 +58,6 @@ const (
 	toTest          = "./manifests/to_test/"
 	testName        = "exporterscraperconfig-sample"
 )
-
-func init() {
-	// Add the required schemes
-	operatorexporterapi.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-	corev1.AddToScheme(scheme)
-}
 
 func TestMain(m *testing.M) {
 	testenv = env.New()
@@ -100,16 +92,16 @@ func TestExporter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// Start the controller manager
-			err = startTestManager(mgrCtx)
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			ctx = context.WithValue(ctx, contextKey("client"), r)
 
 			operatorexporterapi.AddToScheme(r.GetScheme())
 			r.WithNamespace(testNamespace)
+
+			// Start the controller manager
+			err = startTestManager(mgrCtx, r.GetScheme())
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			err = decoder.DecodeEachFile(
 				ctx, os.DirFS(deploymentsPath), "*",
@@ -235,14 +227,6 @@ func TestExporter(t *testing.T) {
 	delete := features.New("Delete").
 		WithLabel("type", "Resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			r, err := resources.New(c.Client().RESTConfig())
-			if err != nil {
-				t.Fail()
-			}
-			operatorexporterapi.AddToScheme(r.GetScheme())
-			r.WithNamespace(testNamespace)
-
-			ctx = context.WithValue(ctx, contextKey("client"), r)
 			return ctx
 		}).
 		Assess("Deployment", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -315,14 +299,6 @@ func TestExporter(t *testing.T) {
 	modify := features.New("Modify").
 		WithLabel("type", "Resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			r, err := resources.New(c.Client().RESTConfig())
-			if err != nil {
-				t.Fail()
-			}
-			operatorexporterapi.AddToScheme(r.GetScheme())
-			r.WithNamespace(testNamespace)
-
-			ctx = context.WithValue(ctx, contextKey("client"), r)
 			return ctx
 		}).
 		Assess("Deployment", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -452,7 +428,7 @@ func TestExporter(t *testing.T) {
 }
 
 // startTestManager starts the controller manager with the given config
-func startTestManager(ctx context.Context) error {
+func startTestManager(ctx context.Context, scheme *runtime.Scheme) error {
 	os.Setenv("REGISTRY", "ghcr.io/krateoplatformops")
 	os.Setenv("REGISTRY_CREDENTIALS", "registry-credentials")
 	os.Setenv("EXPORTER_VERSION", "0.4.0")
@@ -465,7 +441,7 @@ func startTestManager(ctx context.Context) error {
 	var enableHTTP2 bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", true,
+	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", false,
