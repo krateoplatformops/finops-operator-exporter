@@ -27,7 +27,6 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -176,14 +175,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	/*if err = (&controller.ExporterScraperConfigReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ExporterScraperConfig")
-		os.Exit(1)
-	}*/
-
 	gv_apps := schema.GroupVersion{
 		Group:   "apps",
 		Version: "v1",
@@ -192,11 +183,7 @@ func main() {
 		Group:   "",
 		Version: "v1",
 	}
-	cfg, err := rest.InClusterConfig()
-	if err != nil {
-		setupLog.Error(err, "unable to retrieve rest.InClusterConfig")
-		os.Exit(1)
-	}
+	cfg := ctrl.GetConfigOrDie()
 
 	dynClient, err := clientHelper.New(cfg)
 	if err != nil {

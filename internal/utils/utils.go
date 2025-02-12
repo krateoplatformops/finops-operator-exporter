@@ -12,7 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	finopsdatatypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
@@ -173,10 +173,7 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 		return nil
 	}
 
-	inClusterConfig, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
+	inClusterConfig := ctrl.GetConfigOrDie()
 
 	clientset, err := kubernetes.NewForConfig(inClusterConfig)
 	if err != nil {
