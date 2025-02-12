@@ -89,6 +89,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestExporter(t *testing.T) {
+	mgrCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	create := features.New("Create").
 		WithLabel("type", "CR and resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
@@ -98,7 +101,7 @@ func TestExporter(t *testing.T) {
 			}
 
 			// Start the controller manager
-			err = startTestManager(ctx)
+			err = startTestManager(mgrCtx)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -115,6 +118,14 @@ func TestExporter(t *testing.T) {
 			)
 			if err != nil {
 				t.Fatalf("Failed due to error: %s", err)
+			}
+
+			if err := wait.For(
+				conditions.New(r).DeploymentAvailable("webservice-api-mock-deployment", testNamespace),
+				wait.WithTimeout(120*time.Second),
+				wait.WithInterval(5*time.Second),
+			); err != nil {
+				t.Fatal(fmt.Errorf("timed out while waiting for webservice-api-mock-deployment: %w", err))
 			}
 
 			// Create test resources
@@ -144,6 +155,14 @@ func TestExporter(t *testing.T) {
 		}).
 		Assess("Resources", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r := ctx.Value(contextKey("client")).(*resources.Resources)
+
+			if err := wait.For(
+				conditions.New(r).DeploymentAvailable(testName+"-deployment", testNamespace),
+				wait.WithTimeout(120*time.Second),
+				wait.WithInterval(5*time.Second),
+			); err != nil {
+				t.Fatal(fmt.Errorf("timed out while waiting for %s-deployment: %w", testName, err))
+			}
 
 			deployment := &appsv1.Deployment{}
 			configmap := &corev1.ConfigMap{}
@@ -407,7 +426,13 @@ func TestExporter(t *testing.T) {
 			return ctx
 		}).Feature()
 
-	testenv.Test(t, create, delete, modify)
+	cleanup := features.New("Cleanup").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			cancel()
+			return ctx
+		}).Feature()
+
+	testenv.Test(t, create, delete, modify, cleanup)
 }
 
 // startTestManager starts the controller manager with the given config
