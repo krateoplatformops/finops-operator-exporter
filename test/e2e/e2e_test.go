@@ -418,13 +418,7 @@ func TestExporter(t *testing.T) {
 			return ctx
 		}).Feature()
 
-	cleanup := features.New("Cleanup").
-		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			cancel()
-			return ctx
-		}).Feature()
-
-	testenv.Test(t, create, delete, modify, cleanup)
+	testenv.Test(t, create, delete, modify)
 }
 
 // startTestManager starts the controller manager with the given config
