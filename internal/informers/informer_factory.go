@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
@@ -38,6 +37,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 
 	corev1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type InformerFactory struct {
@@ -46,7 +46,7 @@ type InformerFactory struct {
 }
 
 func (r *InformerFactory) StartInformer(namespace string, gvr schema.GroupVersionResource) {
-	inClusterConfig, _ := rest.InClusterConfig()
+	inClusterConfig := ctrl.GetConfigOrDie()
 
 	inClusterConfig.APIPath = "/apis"
 	inClusterConfig.GroupVersion = &finopsv1.GroupVersion

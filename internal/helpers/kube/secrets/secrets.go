@@ -6,14 +6,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func Get(ctx context.Context, sel *SecretKeySelector) (*corev1.Secret, error) {
-	rc, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
+	rc := ctrl.GetConfigOrDie()
 
 	cli, err := kubernetes.NewForConfig(rc)
 	if err != nil {
@@ -24,10 +21,7 @@ func Get(ctx context.Context, sel *SecretKeySelector) (*corev1.Secret, error) {
 }
 
 func Create(ctx context.Context, secret *corev1.Secret) error {
-	rc, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
+	rc := ctrl.GetConfigOrDie()
 
 	cli, err := kubernetes.NewForConfig(rc)
 	if err != nil {
@@ -39,10 +33,7 @@ func Create(ctx context.Context, secret *corev1.Secret) error {
 }
 
 func Update(ctx context.Context, secret *corev1.Secret) error {
-	rc, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
+	rc := ctrl.GetConfigOrDie()
 
 	cli, err := kubernetes.NewForConfig(rc)
 	if err != nil {
@@ -54,10 +45,7 @@ func Update(ctx context.Context, secret *corev1.Secret) error {
 }
 
 func Delete(ctx context.Context, sel *SecretKeySelector) error {
-	rc, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
+	rc := ctrl.GetConfigOrDie()
 
 	cli, err := kubernetes.NewForConfig(rc)
 	if err != nil {

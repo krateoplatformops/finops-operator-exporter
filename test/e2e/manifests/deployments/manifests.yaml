@@ -260,22 +260,6 @@ spec:
     subresources:
       status: {}
 ---
-# helm install finops-operator-exporter krateo/finops-operator-exporter -n finops-test --set controllerManager.image.repository=ghcr.io/krateoplatformops/finops-operator-exporter --set image.tag=0.4.0 --set imagePullSecrets[0].name=registry-credentials --set image.pullPolicy=Always --set env.REGISTRY=ghcr.io/krateoplatformops --dry-run
-# Source: finops-operator-exporter/templates/serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: finops-operator-exporter-controller-manager
-  labels:
-    app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: operator-exporter
-    app.kubernetes.io/part-of: operator-exporter
-    app.kubernetes.io/name: finops-operator-exporter
-    app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.4.0"
-  annotations:
-    {}
----
 # Source: finops-operator-exporter/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -508,7 +492,7 @@ roleRef:
   name: 'finops-operator-exporter-leader-election'
 subjects:
 - kind: ServiceAccount
-  name: 'finops-operator-exporter-controller-manager'
+  name: default
   namespace: 'finops-test'
 ---
 # Source: finops-operator-exporter/templates/rolebinding.yaml
@@ -529,7 +513,7 @@ roleRef:
   name: 'finops-operator-exporter-manager'
 subjects:
 - kind: ServiceAccount
-  name: 'finops-operator-exporter-controller-manager'
+  name: default
   namespace: 'finops-test'
 ---
 # Source: finops-operator-exporter/templates/rolebinding.yaml
@@ -567,73 +551,3 @@ subjects:
 - kind: ServiceAccount
   name: exporterscraper-config-getter-sa
   namespace: 'finops-test'
----
-# Source: finops-operator-exporter/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: finops-operator-exporter-controller-manager
-  labels:
-    app.kubernetes.io/component: manager
-    app.kubernetes.io/part-of: operator-exporter
-    control-plane: controller-manager
-    app.kubernetes.io/name: finops-operator-exporter
-    app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.4.0"
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      control-plane: controller-manager
-      app.kubernetes.io/name: finops-operator-exporter
-      app.kubernetes.io/instance: finops-operator-exporter
-  template:
-    metadata:
-      labels:
-        control-plane: controller-manager
-        app.kubernetes.io/name: finops-operator-exporter
-        app.kubernetes.io/instance: finops-operator-exporter
-      annotations:
-        kubectl.kubernetes.io/default-container: manager
-    spec:
-      containers:
-      - args:
-        - --health-probe-bind-address=:8081
-        - --leader-elect
-        command:
-        - /manager
-        env:
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBERNETES_CLUSTER_DOMAIN
-          value: 
-        envFrom:
-        - configMapRef:
-            name: finops-operator-exporter-repo-envvar
-        image: ghcr.io/krateoplatformops/finops-operator-exporter:0.4.0
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          {}
-        securityContext:
-          null
-      imagePullSecrets:
-      - name: registry-credentials
-      securityContext:
-        runAsNonRoot: true
-      serviceAccountName: finops-operator-exporter-controller-manager
-      terminationGracePeriodSeconds: 10
