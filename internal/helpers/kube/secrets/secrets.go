@@ -32,6 +32,24 @@ func Create(ctx context.Context, secret *corev1.Secret) error {
 	return err
 }
 
+func CreateOrUpdate(ctx context.Context, secret *corev1.Secret) error {
+	rc := ctrl.GetConfigOrDie()
+
+	cli, err := kubernetes.NewForConfig(rc)
+	if err != nil {
+		return err
+	}
+
+	// First try to get the secret
+	_, err = cli.CoreV1().Secrets(secret.GetNamespace()).Get(ctx, secret.Name, metav1.GetOptions{})
+	// Update
+	if err == nil {
+		return Update(ctx, secret)
+	} else {
+		return Create(ctx, secret)
+	}
+}
+
 func Update(ctx context.Context, secret *corev1.Secret) error {
 	rc := ctrl.GetConfigOrDie()
 

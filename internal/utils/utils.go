@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
@@ -11,8 +10,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	finopsdatatypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
@@ -164,35 +161,21 @@ func GetGenericExporterService(exporterScraperConfig *finopsv1.ExporterScraperCo
 	return service, nil
 }
 
-func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) error {
+func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) (*finopsdatatypes.ScraperConfig, error) {
 	if exporterScraperConfig.Spec.ScraperConfig.TableName == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.MetricType == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours == 0 &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace == "" {
-		return nil
+		return nil, nil
 	}
-
-	inClusterConfig := ctrl.GetConfigOrDie()
-
-	clientset, err := kubernetes.NewForConfig(inClusterConfig)
-	if err != nil {
-		return err
-	}
-
-	jsonData, _ := clientset.RESTClient().Get().
-		AbsPath("/apis/finops.krateo.io/v1").
-		Namespace(exporterScraperConfig.Namespace).
-		Resource("scraperconfigs").
-		Name(exporterScraperConfig.Name + "-scraper").
-		DoRaw(context.TODO())
 
 	var api finopsdatatypes.API
 	if exporterScraperConfig.Spec.ScraperConfig.API.EndpointRef == nil {
 		url := "http://" + serviceIp + ":" + strconv.FormatInt(int64(servicePort), 10)
-		err = createEndpointRef(exporterScraperConfig, url)
+		err := createEndpointRef(exporterScraperConfig, url)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		api = finopsdatatypes.API{
 			Path: "/metrics",
@@ -206,57 +189,40 @@ func CreateScraperCR(ctx context.Context, exporterScraperConfig finopsv1.Exporte
 		api = exporterScraperConfig.Spec.ScraperConfig.API
 	}
 
-	var crdResponse CRDResponse
-	_ = json.Unmarshal(jsonData, &crdResponse)
-	if crdResponse.Status == "Failure" {
-		scraperConfig := &finopsdatatypes.ScraperConfig{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ScraperConfig",
-				APIVersion: "finops.krateo.io/v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      exporterScraperConfig.Name + "-scraper",
-				Namespace: exporterScraperConfig.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					{
-						APIVersion: exporterScraperConfig.APIVersion,
-						Kind:       exporterScraperConfig.Kind,
-						Name:       exporterScraperConfig.Name,
-						UID:        exporterScraperConfig.UID,
-					},
+	scraperConfig := &finopsdatatypes.ScraperConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ScraperConfig",
+			APIVersion: "finops.krateo.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      exporterScraperConfig.Name + "-scraper",
+			Namespace: exporterScraperConfig.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: exporterScraperConfig.APIVersion,
+					Kind:       exporterScraperConfig.Kind,
+					Name:       exporterScraperConfig.Name,
+					UID:        exporterScraperConfig.UID,
 				},
 			},
-			Spec: finopsdatatypes.ScraperConfigSpec{
-				TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
-				API:                  api,
-				MetricType:           exporterScraperConfig.Spec.ExporterConfig.MetricType,
-				PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
-				ScraperDatabaseConfigRef: finopsdatatypes.ObjectRef{
-					Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
-					Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
-				},
+		},
+		Spec: finopsdatatypes.ScraperConfigSpec{
+			TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
+			API:                  api,
+			MetricType:           exporterScraperConfig.Spec.ExporterConfig.MetricType,
+			PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
+			ScraperDatabaseConfigRef: finopsdatatypes.ObjectRef{
+				Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
+				Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 			},
-		}
-		jsonData, err = json.Marshal(scraperConfig)
-		if err != nil {
-			return err
-		}
-		_, err := clientset.RESTClient().Post().
-			AbsPath("/apis/finops.krateo.io/v1").
-			Namespace(exporterScraperConfig.Namespace).
-			Resource("scraperconfigs").
-			Name(exporterScraperConfig.Name).
-			Body(jsonData).
-			DoRaw(ctx)
-
-		if err != nil {
-			return err
-		}
+		},
 	}
-	return nil
+
+	return scraperConfig, nil
+
 }
 
-func createEndpointRef(exporterScraperConfig finopsv1.ExporterScraperConfig, url string) error {
+func createEndpointRef(exporterScraperConfig *finopsv1.ExporterScraperConfig, url string) error {
 	secretToCreate := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -279,7 +245,7 @@ func createEndpointRef(exporterScraperConfig finopsv1.ExporterScraperConfig, url
 		},
 	}
 
-	return secretHelper.Create(context.TODO(), secretToCreate)
+	return secretHelper.CreateOrUpdate(context.TODO(), secretToCreate)
 }
 
 type CRDResponse struct {

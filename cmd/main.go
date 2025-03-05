@@ -198,6 +198,7 @@ func main() {
 	informerFactory.StartInformer(watchNamespace, gv_apps.WithResource("deployments"))
 	informerFactory.StartInformer(watchNamespace, gv_core.WithResource("configmaps"))
 	informerFactory.StartInformer(watchNamespace, gv_core.WithResource("services"))
+	informerFactory.StartInformer(watchNamespace, finopsv1.GroupVersion.WithResource("scraperconfigs"))
 
 	o := controller.Options{
 		Logger:                  logging.NewLogrLogger(log.Log.WithName("operator-exporter")),

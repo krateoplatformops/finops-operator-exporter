@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
+	operatorscraperapi "github.com/krateoplatformops/finops-operator-scraper/api/v1"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -187,6 +188,43 @@ func CheckDeployment(deployment appsv1.Deployment, exporterScraperConfig finopsv
 	}
 
 	// Container image and secret name are not checked on purpose, since they may need to be different from the default values
+
+	return true
+}
+
+func CheckScraper(scraperObj operatorscraperapi.ScraperConfig, exporterScraperConfig finopsv1.ExporterScraperConfig) bool {
+	s1 := exporterScraperConfig.Spec.ScraperConfig
+	s2 := scraperObj.Spec
+
+	if s1.TableName != s2.TableName ||
+		s1.PollingIntervalHours != s2.PollingIntervalHours ||
+		exporterScraperConfig.Spec.ExporterConfig.MetricType != s2.MetricType {
+		log.Debug().Msgf("Basic fields not equal: expected %+v, got %+v", s1, s2)
+		return false
+	}
+
+	if s1.ScraperDatabaseConfigRef.Name != s2.ScraperDatabaseConfigRef.Name ||
+		s1.ScraperDatabaseConfigRef.Namespace != s2.ScraperDatabaseConfigRef.Namespace {
+		log.Debug().Msgf("Database config ref not equal: expected %+v, got %+v", s1.ScraperDatabaseConfigRef, s2.ScraperDatabaseConfigRef)
+		return false
+	}
+
+	if s2.API.Path != "/metrics" ||
+		s2.API.Verb != "GET" {
+		log.Debug().Msgf("API fields not equal: expected %+v, got %+v", s1.API, s2.API)
+		return false
+	}
+
+	if exporterScraperConfig.Name != s2.API.EndpointRef.Name ||
+		exporterScraperConfig.Namespace != s2.API.EndpointRef.Namespace {
+		log.Debug().Msgf("API EndpointRef not equal: expected %s %s, got %+v", exporterScraperConfig.Name, exporterScraperConfig.Namespace, s2.API.EndpointRef)
+		return false
+	}
+
+	if len(s2.API.Headers) != 0 {
+		log.Debug().Msgf("API Headers length mismatch: expected %d, got %d", 0, len(s2.API.Headers))
+		return false
+	}
 
 	return true
 }

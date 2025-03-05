@@ -47,13 +47,20 @@ func GetObj(ctx context.Context, cr *finopsDataTypes.ObjectRef, ApiVersion strin
 }
 
 func UpdateObj(ctx context.Context, objToUpdate *unstructured.Unstructured, Resource string, dynClient *dynamic.DynamicClient) error {
+	objUnstructured, err := GetObj(ctx, &finopsDataTypes.ObjectRef{Name: objToUpdate.GetName(), Namespace: objToUpdate.GetNamespace()}, objToUpdate.GetAPIVersion(), Resource, dynClient)
+	if err != nil {
+		return fmt.Errorf("could not get object to update for resource version: %v", err)
+	}
+
+	objToUpdate.SetResourceVersion(objUnstructured.GetResourceVersion())
+
 	gv, _ := schema.ParseGroupVersion(objToUpdate.GetAPIVersion())
 	gvr := schema.GroupVersionResource{
 		Group:    gv.Group,
 		Version:  gv.Version,
 		Resource: Resource,
 	}
-	_, err := dynClient.Resource(gvr).Namespace(objToUpdate.GetNamespace()).Update(ctx, objToUpdate, metav1.UpdateOptions{})
+	_, err = dynClient.Resource(gvr).Namespace(objToUpdate.GetNamespace()).Update(ctx, objToUpdate, metav1.UpdateOptions{})
 	return err
 }
 
