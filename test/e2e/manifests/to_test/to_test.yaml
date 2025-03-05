@@ -15,11 +15,10 @@ spec:
   exporterConfig:
     api: 
       path: /subscriptions/<subscription_id>/providers/Microsoft.Consumption/usageDetails
-      method: GET
+      verb: GET
       endpointRef:
         name: webservice-mock-endpoint
         namespace: finops-test
-    requireAuthentication: false
     metricType: cost
     pollingIntervalHours: 1
     additionalVariables:

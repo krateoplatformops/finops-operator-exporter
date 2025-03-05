@@ -34,6 +34,7 @@ import (
 	operatorexporter "github.com/krateoplatformops/finops-operator-exporter/internal/controller"
 	"github.com/krateoplatformops/finops-operator-exporter/internal/helpers/kube/comparators"
 	"github.com/krateoplatformops/finops-operator-exporter/internal/utils"
+	operatorscraperapi "github.com/krateoplatformops/finops-operator-scraper/api/v1"
 	"github.com/krateoplatformops/provider-runtime/pkg/controller"
 	"github.com/krateoplatformops/provider-runtime/pkg/logging"
 	"github.com/krateoplatformops/provider-runtime/pkg/ratelimiter"
@@ -95,6 +96,7 @@ func TestExporter(t *testing.T) {
 			ctx = context.WithValue(ctx, contextKey("client"), r)
 
 			operatorexporterapi.AddToScheme(r.GetScheme())
+			operatorscraperapi.AddToScheme(r.GetScheme())
 			r.WithNamespace(testNamespace)
 
 			// Start the controller manager
@@ -159,6 +161,7 @@ func TestExporter(t *testing.T) {
 			deployment := &appsv1.Deployment{}
 			configmap := &corev1.ConfigMap{}
 			service := &corev1.Service{}
+			scraperConfig := &operatorscraperapi.ScraperConfig{}
 
 			err := r.Get(ctx, testName+"-deployment", testNamespace, deployment)
 			if err != nil {
@@ -175,13 +178,18 @@ func TestExporter(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			err = r.Get(ctx, testName+"-scraper", testNamespace, scraperConfig)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			crGet := &operatorexporterapi.ExporterScraperConfig{}
 			err = r.Get(ctx, testName, testNamespace, crGet)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if crGet.Status.ActiveExporter.Name == "" || crGet.Status.ConfigMap.Name == "" || crGet.Status.Service.Name == "" {
+			if crGet.Status.ActiveExporter.Name == "" || crGet.Status.ConfigMap.Name == "" || crGet.Status.Service.Name == "" || crGet.Status.ScraperConfig.Name == "" {
 				t.Fatal(fmt.Errorf("missing status update"))
 			}
 			return ctx
@@ -290,6 +298,28 @@ func TestExporter(t *testing.T) {
 			time.Sleep(5 * time.Second) // Wait for informer to re-create
 
 			err = r.Get(ctx, testName+"-service", testNamespace, resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return ctx
+		}).
+		Assess("ScraperConfig", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			r := ctx.Value(contextKey("client")).(*resources.Resources)
+
+			resource := &operatorscraperapi.ScraperConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testName + "-scraper",
+					Namespace: testNamespace,
+				},
+			}
+			err := r.Delete(ctx, resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			time.Sleep(5 * time.Second) // Wait for informer to re-create
+
+			err = r.Get(ctx, testName+"-scraper", testNamespace, resource)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -416,6 +446,44 @@ func TestExporter(t *testing.T) {
 				t.Fatal("Service not restored by informer")
 			}
 			return ctx
+		}).
+		Assess("ScraperConfig", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			r := ctx.Value(contextKey("client")).(*resources.Resources)
+
+			exporterScraperConfig := &operatorexporterapi.ExporterScraperConfig{}
+			err := r.Get(ctx, testName, testNamespace, exporterScraperConfig)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// This is necessary because it does not get compiled automatically by the GET
+			exporterScraperConfig.TypeMeta.Kind = "ExporterScraperConfig"
+			exporterScraperConfig.TypeMeta.APIVersion = "finops.krateo.io/v1"
+
+			resource := &operatorscraperapi.ScraperConfig{}
+			err = r.Get(ctx, testName+"-scraper", testNamespace, resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resource.Spec.API.EndpointRef.Name = "broken"
+
+			err = r.Update(ctx, resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			time.Sleep(5 * time.Second) // Wait for informer to restore
+
+			resource = &operatorscraperapi.ScraperConfig{}
+			err = r.Get(ctx, testName+"-scraper", testNamespace, resource)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !comparators.CheckScraper(*resource, *exporterScraperConfig) {
+				t.Fatal("ScraperConfig not restored by informer")
+			}
+			return ctx
 		}).Feature()
 
 	testenv.Test(t, create, delete, modify)
@@ -504,6 +572,7 @@ func startTestManager(ctx context.Context, scheme *runtime.Scheme) error {
 	informerFactory.StartInformer(testNamespace, gv_apps.WithResource("deployments"))
 	informerFactory.StartInformer(testNamespace, gv_core.WithResource("configmaps"))
 	informerFactory.StartInformer(testNamespace, gv_core.WithResource("services"))
+	informerFactory.StartInformer(testNamespace, operatorexporterapi.GroupVersion.WithResource("scraperconfigs"))
 
 	o := controller.Options{
 		Logger:                  logging.NewLogrLogger(operatorlogger.Log.WithName("operator-exporter")),

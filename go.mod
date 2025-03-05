@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.2
 
 require (
-	github.com/krateoplatformops/finops-data-types v0.0.0-20250205150829-5237c25c841c
+	github.com/krateoplatformops/finops-data-types v0.0.0-20250305132047-2509d040b4d9
 	k8s.io/apimachinery v0.31.3
 	k8s.io/client-go v0.31.1
 	sigs.k8s.io/controller-runtime v0.19.0
@@ -52,6 +52,7 @@ require (
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/krateoplatformops/finops-operator-scraper v0.0.0-20250213160353-1a876cf456bd
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

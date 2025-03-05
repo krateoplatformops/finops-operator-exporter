@@ -31,8 +31,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
+	finopsdatatypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	finopsv1 "github.com/krateoplatformops/finops-operator-exporter/api/v1"
+	operatorscraperapi "github.com/krateoplatformops/finops-operator-scraper/api/v1"
 	prv1 "github.com/krateoplatformops/provider-runtime/apis/common/v1"
 	"github.com/krateoplatformops/provider-runtime/pkg/controller"
 	"github.com/krateoplatformops/provider-runtime/pkg/event"
@@ -133,7 +134,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 
 	// Check if a deployment for this configuration already exists
 	existingObjDeployment, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.ActiveExporter.Name,
 			Namespace: exporterScraperConfig.Status.ActiveExporter.Namespace},
 		"apps/v1", "deployments", e.dynClient)
@@ -146,7 +147,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 
 	// ConfigMap status objRef and pointer for GET
 	existingObjConfigMap, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.ConfigMap.Name,
 			Namespace: exporterScraperConfig.Status.ConfigMap.Namespace},
 		"v1", "configmaps", e.dynClient)
@@ -159,7 +160,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 
 	// Service status objRef and pointer for GET
 	existingObjService, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.Service.Name,
 			Namespace: exporterScraperConfig.Status.Service.Namespace},
 		"v1", "services", e.dynClient)
@@ -170,9 +171,22 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 		}, nil
 	}
 
+	// ScraperConfig status objRef and pointer for GET
+	existingObjScraper, err := clientHelper.GetObj(ctx,
+		&finopsdatatypes.ObjectRef{
+			Name:      exporterScraperConfig.Status.ScraperConfig.Name,
+			Namespace: exporterScraperConfig.Status.ScraperConfig.Namespace},
+		"finops.krateo.io/v1", "scraperconfigs", e.dynClient)
+	if err != nil {
+		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig scraperconfig", "object name: %s", &exporterScraperConfig.Status.ScraperConfig.Name)
+		return reconciler.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
+
 	// Check if all elements of the deployment exist
 	// If any the objects does not exist, something happend, reconcile spec-status
-	if existingObjDeployment.GetName() == "" || existingObjConfigMap.GetName() == "" || existingObjService.GetName() == "" {
+	if existingObjDeployment.GetName() == "" || existingObjConfigMap.GetName() == "" || existingObjService.GetName() == "" || existingObjScraper.GetName() == "" {
 		return reconciler.ExternalObservation{
 			ResourceExists: false,
 		}, nil
@@ -243,6 +257,12 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) error {
 		return err
 	}
 
+	genericExporterScraperConfig, _ := utils.GetGenericExporterService(exporterScraperConfig)
+	genericExporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(genericExporterScraperConfig)
+	if err != nil {
+		return err
+	}
+
 	err = clientHelper.UpdateObj(ctx, genericExporterConfigMapUnstructured, "configmaps", e.dynClient)
 	if err != nil {
 		return err
@@ -254,6 +274,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) error {
 	}
 
 	err = clientHelper.UpdateObj(ctx, genericExporterServiceUnstructured, "services", e.dynClient)
+	if err != nil {
+		return err
+	}
+
+	err = clientHelper.UpdateObj(ctx, genericExporterScraperConfigUnstructured, "scraperconfigs", e.dynClient)
 	if err != nil {
 		return err
 	}
@@ -272,22 +297,27 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 
 	exporterScraperConfig.SetConditions(prv1.Deleting())
 
-	err := clientHelper.DeleteObj(ctx, &finopsDataTypes.ObjectRef{Name: exporterScraperConfig.Name + "-deployment", Namespace: exporterScraperConfig.Namespace}, "apps/v1", "deployments", e.dynClient)
+	err := clientHelper.DeleteObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name + "-deployment", Namespace: exporterScraperConfig.Namespace}, "apps/v1", "deployments", e.dynClient)
 	if err != nil {
 		return fmt.Errorf("error while deleting Deployment %v", err)
 	}
 
-	err = clientHelper.DeleteObj(ctx, &finopsDataTypes.ObjectRef{Name: exporterScraperConfig.Name + "-configmap", Namespace: exporterScraperConfig.Namespace}, "v1", "configmaps", e.dynClient)
+	err = clientHelper.DeleteObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name + "-configmap", Namespace: exporterScraperConfig.Namespace}, "v1", "configmaps", e.dynClient)
 	if err != nil {
 		return fmt.Errorf("error while deleting ConfigMap %v", err)
 	}
 
-	err = clientHelper.DeleteObj(ctx, &finopsDataTypes.ObjectRef{Name: exporterScraperConfig.Name + "-service", Namespace: exporterScraperConfig.Namespace}, "v1", "services", e.dynClient)
+	err = clientHelper.DeleteObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name + "-service", Namespace: exporterScraperConfig.Namespace}, "v1", "services", e.dynClient)
 	if err != nil {
 		return fmt.Errorf("error while deleting Service %v", err)
 	}
 
-	e.rec.Eventf(exporterScraperConfig, corev1.EventTypeNormal, "Received delete event", "removed deployment, configmap and service objects")
+	err = clientHelper.DeleteObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name + "-scraper", Namespace: exporterScraperConfig.Namespace}, "finops.krateo.io/v1", "scraperconfigs", e.dynClient)
+	if err != nil {
+		return fmt.Errorf("error while deleting ScraperConfig %v", err)
+	}
+
+	e.rec.Eventf(exporterScraperConfig, corev1.EventTypeNormal, "Received delete event", "removed deployment, configmap, service and scraperconfig objects")
 	return nil
 }
 
@@ -321,7 +351,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		if err != nil {
 			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
 		}
-		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsDataTypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
 		if err != nil {
 			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
 		}
@@ -356,7 +386,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		if err != nil {
 			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
 		}
-		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsDataTypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
 		if err != nil {
 			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
 		}
@@ -391,10 +421,18 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		if err != nil {
 			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
 		}
+		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+		if err != nil {
+			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
+		}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
+		if err != nil {
+			return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
+		}
 	}
 
 	// Get the service to know on which port it created the service
-	genericExporterServiceUnstructuredCreated, err := clientHelper.GetObj(ctx, &finopsDataTypes.ObjectRef{Name: genericExporterService.Name, Namespace: genericExporterService.Namespace}, "v1", "services", dynClient)
+	genericExporterServiceUnstructuredCreated, err := clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: genericExporterService.Name, Namespace: genericExporterService.Namespace}, "v1", "services", dynClient)
 	if err != nil {
 		return fmt.Errorf("error while getting just created service: %v", err)
 	}
@@ -410,10 +448,31 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 		servicePort = int(port.TargetPort.IntVal)
 	}
 
-	// Create the CR to start the Scraper Operator
-	err = utils.CreateScraperCR(ctx, *exporterScraperConfig, serviceIp, servicePort)
+	// Create the ScraperConfig
+	genericExporterScraperConfig, _ := utils.GetGenericExporterScraperConfig(exporterScraperConfig, serviceIp, servicePort)
+	genericExporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(genericExporterScraperConfig)
 	if err != nil {
-		return fmt.Errorf("error while creating the scraper cr: %v", err)
+		return err
+	}
+	if exporterScraperConfig.Status.ScraperConfig.Name == "" {
+		err = clientHelper.CreateObj(ctx, genericExporterScraperConfigUnstructured, "scraperconfigs", dynClient)
+		if err != nil {
+			return fmt.Errorf("error while creating scraperconfig: %v", err)
+		}
+		// Update status
+		exporterScraperConfig.Status.ScraperConfig = corev1.ObjectReference{
+			Kind:      genericExporterScraperConfig.Kind,
+			Namespace: genericExporterScraperConfig.Namespace,
+			Name:      genericExporterScraperConfig.Name,
+		}
+		exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
+		if err != nil {
+			return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
+		}
+		err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
+		if err != nil {
+			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
+		}
 	}
 
 	return nil
@@ -422,7 +481,7 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 func checkExporterStatus(ctx context.Context, exporterScraperConfig *finopsv1.ExporterScraperConfig, dynClient *dynamic.DynamicClient) (bool, string, error) {
 	// Check if a deployment for this configuration already exists
 	existingObjDeploymentUnstructured, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.ActiveExporter.Name,
 			Namespace: exporterScraperConfig.Status.ActiveExporter.Namespace},
 		"apps/v1", "deployments", dynClient)
@@ -440,7 +499,7 @@ func checkExporterStatus(ctx context.Context, exporterScraperConfig *finopsv1.Ex
 
 	// ConfigMap status objRef
 	existingObjConfigMapUnstructured, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.ConfigMap.Name,
 			Namespace: exporterScraperConfig.Status.ConfigMap.Namespace},
 		"v1", "configmaps", dynClient)
@@ -458,7 +517,7 @@ func checkExporterStatus(ctx context.Context, exporterScraperConfig *finopsv1.Ex
 
 	// Service status objRef
 	existingObjServiceUnstructured, err := clientHelper.GetObj(ctx,
-		&finopsDataTypes.ObjectRef{
+		&finopsdatatypes.ObjectRef{
 			Name:      exporterScraperConfig.Status.Service.Name,
 			Namespace: exporterScraperConfig.Status.Service.Namespace},
 		"v1", "services", dynClient)
@@ -472,6 +531,24 @@ func checkExporterStatus(ctx context.Context, exporterScraperConfig *finopsv1.Ex
 	}
 	if !comparators.CheckService(*existingObjService, *exporterScraperConfig) {
 		return false, "Service", nil
+	}
+
+	// ScraperConfig status objRef
+	existingObjScraperConfigUnstructured, err := clientHelper.GetObj(ctx,
+		&finopsdatatypes.ObjectRef{
+			Name:      exporterScraperConfig.Status.ScraperConfig.Name,
+			Namespace: exporterScraperConfig.Status.ScraperConfig.Namespace},
+		"finops.krateo.io/v1", "scraperconfigs", dynClient)
+	if err != nil {
+		return false, "", fmt.Errorf("could not obtain exporter scraperconfig: %v", err)
+	}
+	existingObjScraperConfig := &operatorscraperapi.ScraperConfig{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(existingObjScraperConfigUnstructured.Object, existingObjScraperConfig)
+	if err != nil {
+		return false, "", err
+	}
+	if !comparators.CheckScraper(*existingObjScraperConfig, *exporterScraperConfig) {
+		return false, "ScraperConfig", nil
 	}
 
 	return true, "", nil
