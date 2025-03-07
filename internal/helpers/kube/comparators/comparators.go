@@ -197,7 +197,7 @@ func CheckScraper(scraperObj operatorscraperapi.ScraperConfig, exporterScraperCo
 	s2 := scraperObj.Spec
 
 	if s1.TableName != s2.TableName ||
-		s1.PollingIntervalHours != s2.PollingIntervalHours ||
+		s1.PollingInterval.Seconds() != s2.PollingInterval.Seconds() ||
 		exporterScraperConfig.Spec.ExporterConfig.MetricType != s2.MetricType {
 		log.Debug().Msgf("Basic fields not equal: expected %+v, got %+v", s1, s2)
 		return false

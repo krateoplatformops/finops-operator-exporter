@@ -18,7 +18,7 @@ limitations under the License.
 package v1
 
 import (
-	finopsDataTypes "github.com/krateoplatformops/finops-data-types/api/v1"
+	finopsdatatypes "github.com/krateoplatformops/finops-data-types/api/v1"
 	prv1 "github.com/krateoplatformops/provider-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,8 +31,8 @@ type ExporterScraperConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   finopsDataTypes.ExporterScraperConfigSpec   `json:"spec,omitempty"`
-	Status finopsDataTypes.ExporterScraperConfigStatus `json:"status,omitempty"`
+	Spec   finopsdatatypes.ExporterScraperConfigSpec   `json:"spec,omitempty"`
+	Status finopsdatatypes.ExporterScraperConfigStatus `json:"status,omitempty"`
 }
 
 func (mg *ExporterScraperConfig) GetCondition(ct prv1.ConditionType) prv1.Condition {
