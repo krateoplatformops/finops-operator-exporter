@@ -1,40 +1,3 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: webservice-api-mock-deployment
-  namespace: finops-test
-  labels:
-    app: webservice-api-mock
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: webservice-api-mock
-  template:
-    metadata:
-      labels:
-        app: webservice-api-mock
-    spec:
-      containers:
-      - name: webservice
-        imagePullPolicy: Always
-        image: ghcr.io/krateoplatformops/finops-webservice-api-mock:latest
-        ports:
-        - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: webservice-api-mock
-  namespace: finops-test
-spec:
-  selector:
-    app: webservice-api-mock
-  type: NodePort
-  ports:
-  - protocol: TCP
-    port: 8080
-    targetPort: 8080
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -108,8 +71,9 @@ spec:
               metricType:
                 default: cost
                 type: string
-              pollingIntervalHours:
-                type: integer
+              pollingInterval:
+                format: duration
+                type: string
               scraperDatabaseConfigRef:
                 properties:
                   name:
@@ -123,7 +87,7 @@ spec:
               tableName:
                 type: string
             required:
-            - pollingIntervalHours
+            - pollingInterval
             - scraperDatabaseConfigRef
             - tableName
             type: object
@@ -259,6 +223,45 @@ spec:
     storage: true
     subresources:
       status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webservice-api-mock-deployment
+  namespace: finops-test
+  labels:
+    app: webservice-api-mock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webservice-api-mock
+  template:
+    metadata:
+      labels:
+        app: webservice-api-mock
+    spec:
+      containers:
+      - name: webservice
+        imagePullPolicy: Always
+        image: ghcr.io/krateoplatformops/finops-webservice-api-mock:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webservice-api-mock
+  namespace: finops-test
+spec:
+  selector:
+    app: webservice-api-mock
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
 ---
 # Source: finops-operator-exporter/templates/serviceaccount.yaml
 apiVersion: v1
@@ -283,22 +286,6 @@ metadata:
     app.kubernetes.io/version: "0.4.0"
   annotations:
     {}
----
-# Source: finops-operator-exporter/templates/configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: finops-operator-exporter-repo-envvar
-  labels:
-    app.kubernetes.io/name: finops-operator-exporter
-    app.kubernetes.io/instance: finops-operator-exporter
-    app.kubernetes.io/version: "0.4.0"
-data:
-  MAX_RECONCILE_RATE: "1"
-  POLLING_INTERVAL: "300"
-  REGISTRY: "ghcr.io/krateoplatformops"
-  REGISTRY_CREDENTIALS: "registry-credentials"
-  EXPORTER_VERSION: 0.4.0
 ---
 # Source: finops-operator-exporter/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1

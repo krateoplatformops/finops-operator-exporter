@@ -164,7 +164,7 @@ func GetGenericExporterService(exporterScraperConfig *finopsv1.ExporterScraperCo
 func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScraperConfig, serviceIp string, servicePort int) (*finopsdatatypes.ScraperConfig, error) {
 	if exporterScraperConfig.Spec.ScraperConfig.TableName == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.MetricType == "" &&
-		exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours == 0 &&
+		exporterScraperConfig.Spec.ScraperConfig.PollingInterval.Seconds() == 0 &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name == "" &&
 		exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace == "" {
 		return nil, nil
@@ -207,10 +207,10 @@ func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScr
 			},
 		},
 		Spec: finopsdatatypes.ScraperConfigSpec{
-			TableName:            exporterScraperConfig.Spec.ScraperConfig.TableName,
-			API:                  api,
-			MetricType:           exporterScraperConfig.Spec.ExporterConfig.MetricType,
-			PollingIntervalHours: exporterScraperConfig.Spec.ScraperConfig.PollingIntervalHours,
+			TableName:       exporterScraperConfig.Spec.ScraperConfig.TableName,
+			API:             api,
+			MetricType:      exporterScraperConfig.Spec.ExporterConfig.MetricType,
+			PollingInterval: exporterScraperConfig.Spec.ScraperConfig.PollingInterval,
 			ScraperDatabaseConfigRef: finopsdatatypes.ObjectRef{
 				Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
 				Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
