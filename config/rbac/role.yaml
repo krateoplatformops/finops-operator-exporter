@@ -33,7 +33,6 @@ rules:
   - finops.krateo.io
   resources:
   - databaseconfigs
-  - scraperconfigs
   verbs:
   - create
   - get
@@ -42,6 +41,7 @@ rules:
   - finops.krateo.io
   resources:
   - exporterscraperconfigs
+  - scraperconfigs
   verbs:
   - create
   - delete

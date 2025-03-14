@@ -54,7 +54,7 @@ const (
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=exporterscraperconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=exporterscraperconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=exporterscraperconfigs/finalizers,verbs=update
-//+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=scraperconfigs,verbs=get;create;update
+//+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=scraperconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=databaseconfigs,verbs=get;create;update
 //+kubebuilder:rbac:groups=apps,namespace=finops,resources=deployments,verbs=get;create;delete;list;update;watch
 //+kubebuilder:rbac:groups=core,namespace=finops,resources=configmaps,verbs=get;create;delete;list;update;watch

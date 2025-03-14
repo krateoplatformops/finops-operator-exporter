@@ -85,8 +85,6 @@ func TestExporter(t *testing.T) {
 	mgrCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fmt.Printf("test")
-
 	create := features.New("Create").
 		WithLabel("type", "CR and resources").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
