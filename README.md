@@ -94,6 +94,11 @@ metadata:
 spec:
   metricName: Percentage CPU
   endpoint:
+    resourcePrefixAPI:
+      endpointRef:
+        name: azure-management-api
+        namespace: finops
+      verb: GET
     resourceSuffix: /providers/microsoft.insights/metrics?api-version=2023-10-01
   timespan: month
   interval: PT15M
