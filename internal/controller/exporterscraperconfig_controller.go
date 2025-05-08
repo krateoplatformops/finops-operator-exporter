@@ -257,7 +257,23 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) error {
 		return err
 	}
 
-	genericExporterScraperConfig, _ := utils.GetGenericExporterService(exporterScraperConfig)
+	// Get the service to know on which port it created the service
+	genericExporterServiceUnstructuredCreated, err := clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: genericExporterService.Name, Namespace: genericExporterService.Namespace}, "v1", "services", e.dynClient)
+	if err != nil {
+		return fmt.Errorf("error while getting service: %v", err)
+	}
+	genericExporterServiceCreated := &corev1.Service{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(genericExporterServiceUnstructuredCreated.Object, genericExporterServiceCreated)
+	if err != nil {
+		return fmt.Errorf("error while converting unstructured service to service: %v", err)
+	}
+
+	serviceIp := genericExporterServiceCreated.Spec.ClusterIP
+	servicePort := -1
+	for _, port := range genericExporterServiceCreated.Spec.Ports {
+		servicePort = int(port.TargetPort.IntVal)
+	}
+	genericExporterScraperConfig, _ := utils.GetGenericExporterScraperConfig(exporterScraperConfig, serviceIp, servicePort)
 	genericExporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(genericExporterScraperConfig)
 	if err != nil {
 		return err
