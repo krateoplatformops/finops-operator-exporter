@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +42,7 @@ import (
 	"github.com/krateoplatformops/provider-runtime/pkg/ratelimiter"
 	"github.com/krateoplatformops/provider-runtime/pkg/reconciler"
 	"github.com/krateoplatformops/provider-runtime/pkg/resource"
+	"github.com/rs/zerolog/log"
 
 	clientHelper "github.com/krateoplatformops/finops-operator-exporter/internal/helpers/kube/client"
 	"github.com/krateoplatformops/finops-operator-exporter/internal/helpers/kube/comparators"
@@ -140,6 +142,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 		"apps/v1", "deployments", e.dynClient)
 	if err != nil {
 		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig deployment", "object name: %s", exporterScraperConfig.Status.ActiveExporter.Name)
+		log.Error().Err(err).Msg("could not get exporterscraperconfig deployment")
 		return reconciler.ExternalObservation{
 			ResourceExists: false,
 		}, nil
@@ -153,6 +156,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 		"v1", "configmaps", e.dynClient)
 	if err != nil {
 		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig configmap", "object name: %s", exporterScraperConfig.Status.ConfigMap.Name)
+		log.Error().Err(err).Msg("could not get exporterscraperconfig configmap")
 		return reconciler.ExternalObservation{
 			ResourceExists: false,
 		}, nil
@@ -166,6 +170,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 		"v1", "services", e.dynClient)
 	if err != nil {
 		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig service", "object name: %s", exporterScraperConfig.Status.Service.Name)
+		log.Error().Err(err).Msg("could not get exporterscraperconfig service")
 		return reconciler.ExternalObservation{
 			ResourceExists: false,
 		}, nil
@@ -178,7 +183,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (reconciler
 			Namespace: exporterScraperConfig.Status.ScraperConfig.Namespace},
 		"finops.krateo.io/v1", "scraperconfigs", e.dynClient)
 	if err != nil {
-		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig scraperconfig", "object name: %s", &exporterScraperConfig.Status.ScraperConfig.Name)
+		e.rec.Eventf(exporterScraperConfig, corev1.EventTypeWarning, "could not get exporterscraperconfig scraperconfig", "object name: %s", exporterScraperConfig.Status.ScraperConfig.Name)
+		log.Error().Err(err).Msg("could not get exporterscraperconfig scraperconfig")
 		return reconciler.ExternalObservation{
 			ResourceExists: false,
 		}, nil
@@ -348,33 +354,36 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	if err != nil {
 		return err
 	}
-	if exporterScraperConfig.Status.ConfigMap.Name == "" {
-		err = clientHelper.CreateObj(ctx, genericExporterConfigMapUnstructured, "configmaps", dynClient)
-		if err != nil {
+
+	err = clientHelper.CreateObj(ctx, genericExporterConfigMapUnstructured, "configmaps", dynClient)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
 			return fmt.Errorf("error while creating configmap: %v", err)
+		} else {
+			log.Warn().Err(err).Msg("resource already exists, skipping...")
 		}
-		// Update status
-		exporterScraperConfig.Status.ConfigMap = corev1.ObjectReference{
-			Kind:      genericExporterConfigMap.Kind,
-			Namespace: genericExporterConfigMap.Namespace,
-			Name:      genericExporterConfigMap.Name,
-		}
-		exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
-		}
-		err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
-		}
-		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
-		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting unstructured configmap to configmap: %v", err)
-		}
+	}
+	// Update status
+	exporterScraperConfig.Status.ConfigMap = corev1.ObjectReference{
+		Kind:      genericExporterConfigMap.Kind,
+		Namespace: genericExporterConfigMap.Namespace,
+		Name:      genericExporterConfigMap.Name,
+	}
+	exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
+	}
+	err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting unstructured configmap to configmap: %v", err)
 	}
 
 	// Create the generic exporter deployment
@@ -383,33 +392,35 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	if err != nil {
 		return err
 	}
-	if exporterScraperConfig.Status.ActiveExporter.Name == "" {
-		err = clientHelper.CreateObj(ctx, genericExporterDeploymentUnstructured, "deployments", dynClient)
-		if err != nil {
+	err = clientHelper.CreateObj(ctx, genericExporterDeploymentUnstructured, "deployments", dynClient)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
 			return fmt.Errorf("error while creating deployment: %v", err)
+		} else {
+			log.Warn().Err(err).Msg("resource already exists, skipping...")
 		}
-		// Update status
-		exporterScraperConfig.Status.ActiveExporter = corev1.ObjectReference{
-			Kind:      genericExporterDeployment.Kind,
-			Namespace: genericExporterDeployment.Namespace,
-			Name:      genericExporterDeployment.Name,
-		}
-		exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
-		}
-		err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
-		}
-		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
-		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
-		}
+	}
+	// Update status
+	exporterScraperConfig.Status.ActiveExporter = corev1.ObjectReference{
+		Kind:      genericExporterDeployment.Kind,
+		Namespace: genericExporterDeployment.Namespace,
+		Name:      genericExporterDeployment.Name,
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.ToUnstructured(exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
+	}
+	err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
 	}
 
 	// Create the Service
@@ -418,33 +429,35 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	if err != nil {
 		return err
 	}
-	if exporterScraperConfig.Status.Service.Name == "" {
-		err = clientHelper.CreateObj(ctx, genericExporterServiceUnstructured, "services", dynClient)
-		if err != nil {
+	err = clientHelper.CreateObj(ctx, genericExporterServiceUnstructured, "services", dynClient)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
 			return fmt.Errorf("error while creating service: %v", err)
+		} else {
+			log.Warn().Err(err).Msg("resource already exists, skipping...")
 		}
-		// Update status
-		exporterScraperConfig.Status.Service = corev1.ObjectReference{
-			Kind:      genericExporterService.Kind,
-			Namespace: genericExporterService.Namespace,
-			Name:      genericExporterService.Name,
-		}
-		exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
-		}
-		err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
-		}
-		exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
-		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
-		}
+	}
+	// Update status
+	exporterScraperConfig.Status.Service = corev1.ObjectReference{
+		Kind:      genericExporterService.Kind,
+		Namespace: genericExporterService.Namespace,
+		Name:      genericExporterService.Name,
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.ToUnstructured(exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
+	}
+	err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.GetObj(ctx, &finopsdatatypes.ObjectRef{Name: exporterScraperConfig.Name, Namespace: exporterScraperConfig.Namespace}, exporterScraperConfig.APIVersion, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while getting updated exporterscraperconfig (status): %v", err)
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(exporterScraperConfigUnstructured.Object, exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting unstructured deployment to deployment: %v", err)
 	}
 
 	// Get the service to know on which port it created the service
@@ -470,25 +483,28 @@ func createExporterFromScratch(ctx context.Context, exporterScraperConfig *finop
 	if err != nil {
 		return err
 	}
-	if exporterScraperConfig.Status.ScraperConfig.Name == "" {
-		err = clientHelper.CreateObj(ctx, genericExporterScraperConfigUnstructured, "scraperconfigs", dynClient)
-		if err != nil {
+
+	err = clientHelper.CreateObj(ctx, genericExporterScraperConfigUnstructured, "scraperconfigs", dynClient)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
 			return fmt.Errorf("error while creating scraperconfig: %v", err)
+		} else {
+			log.Warn().Err(err).Msg("resource already exists, skipping...")
 		}
-		// Update status
-		exporterScraperConfig.Status.ScraperConfig = corev1.ObjectReference{
-			Kind:      genericExporterScraperConfig.Kind,
-			Namespace: genericExporterScraperConfig.Namespace,
-			Name:      genericExporterScraperConfig.Name,
-		}
-		exporterScraperConfigUnstructured, err := clientHelper.ToUnstructured(exporterScraperConfig)
-		if err != nil {
-			return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
-		}
-		err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
-		if err != nil {
-			return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
-		}
+	}
+	// Update status
+	exporterScraperConfig.Status.ScraperConfig = corev1.ObjectReference{
+		Kind:      genericExporterScraperConfig.Kind,
+		Namespace: genericExporterScraperConfig.Namespace,
+		Name:      genericExporterScraperConfig.Name,
+	}
+	exporterScraperConfigUnstructured, err = clientHelper.ToUnstructured(exporterScraperConfig)
+	if err != nil {
+		return fmt.Errorf("error while converting exporterscraperconfigs to unstructured: %v", err)
+	}
+	err = clientHelper.UpdateStatus(ctx, exporterScraperConfigUnstructured, "exporterscraperconfigs", dynClient)
+	if err != nil {
+		return fmt.Errorf("error while updating status for exporterscraperconfig: %v", err)
 	}
 
 	return nil

@@ -189,7 +189,7 @@ func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScr
 		api = exporterScraperConfig.Spec.ScraperConfig.API
 	}
 
-	scraperConfig := &finopsdatatypes.ScraperConfig{
+	return &finopsdatatypes.ScraperConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ScraperConfig",
 			APIVersion: "finops.krateo.io/v1",
@@ -216,10 +216,7 @@ func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScr
 				Namespace: exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Namespace,
 			},
 		},
-	}
-
-	return scraperConfig, nil
-
+	}, nil
 }
 
 func createEndpointRef(exporterScraperConfig *finopsv1.ExporterScraperConfig, url string) error {
