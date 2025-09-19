@@ -56,12 +56,12 @@ spec:
       name: # name of the databaseConfigRef CR 
       namespace: # namespace of the databaseConfigRef CR
 ```
-If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
+If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV/JSON file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
 The field `spec.scraperConfig.api` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
 
 ### Example Use Case for Pricing Visualization
-The Composable FinOps can be used to display pricing in the Krateo Composable Portal cards through a dedicated composition. You can find out more here: [krateo-v2-template-finops-example-pricing-vm-azure](https://github.com/krateoplatformops/krateo-v2-template-finops-example-pricing-vm-azure).
+The Composable FinOps can be used to display pricing in the Krateo Composable Portal cards through a dedicated composition. You can find out more here: [vm-azure](https://github.com/krateoplatformops-blueprints/azure-vm-finops).
 
 
 ## Configuration
@@ -74,29 +74,22 @@ The FOCUS data needs to be in the CSV format and the `Tags` column has to use th
 {"CostCenter": "1234","Cost department": "Marketing","env": "prod","org": "trey","Project": "Foo"}
 ```
 
-### Prerequisites
-- go version v1.21.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+The operator has several configuration variables that can be set in the environment:
+- `POLLING_INTERVAL`: _default_ "300": polling interval of the operator
+- `MAX_RECONCILE_RATE`: _default_ "1": number of worker for the operator
+- `REGISTRY`: _default_ "ghcr.io/krateoplatformops": registry to get the exporter image from
+- `REGISTRY_CREDENTIALS`: _default_ "registry-credentials": name of the secret with the credentials (in the same namespace)
+- `EXPORTER_VERSION`: _default_ "0.5.0": version of the image for the exporter
+- `EXPORTER_NAME`: _default_ "finops-prometheus-exporter": name of the image for the exporter
 
 ### Installation with HELM
 The operator can be installed through its [Helm chart](https://github.com/krateoplatformops/finops-operator-exporter-chart).
 
 ### Dependencies
 To run this repository in your Kubernetes cluster, you need to install the following Krateo Composable FinOps components
- - prometheus-exporter-generic
+ - prometheus-exporter
  - prometheus-scraper-generic
  - operator-scraper
- - prometheus-resource-exporter-azure
  - finops-database-handler
 
 Additionally, you need to have a working CrateDB instance to store the scraped data.
-
-### Bearer-token for Azure
-In order to invoke Azure API, the exporter needs to be authenticated first. In the current implementation, it utilizes the Azure REST API, which require the bearer-token for authentication. For each target Azure subscription, an application needs to be registered and assigned with the Cost Management Reader role.
-
-Once that is completed, run the following command to obtain the bearer-token (1h validity):
-```
-curl -X POST -d 'grant_type=client_credentials&client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&resource=https%3A%2F%2Fmanagement.azure.com%2F' https://login.microsoftonline.com/<TENANT_ID>/oauth2/token
-```
