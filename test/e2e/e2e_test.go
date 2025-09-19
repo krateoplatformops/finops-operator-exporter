@@ -493,8 +493,7 @@ func TestExporter(t *testing.T) {
 func startTestManager(ctx context.Context, scheme *runtime.Scheme) error {
 	os.Setenv("REGISTRY", "ghcr.io/krateoplatformops")
 	os.Setenv("REGISTRY_CREDENTIALS", "registry-credentials")
-	os.Setenv("EXPORTER_VERSION", "0.4.3")
-	os.Setenv("RESOURCE_EXPORTER_VERSION", "0.4.1")
+	os.Setenv("EXPORTER_VERSION", "0.5.0")
 
 	var metricsAddr string
 	var enableLeaderElection bool
