@@ -152,8 +152,15 @@ func CheckDeployment(deployment appsv1.Deployment, exporterScraperConfig finopsv
 	}
 
 	imageName := strings.TrimSuffix(os.Getenv("REGISTRY"), "/")
-	imageVersion := strings.TrimSuffix(os.Getenv("EXPORTER_VERSION"), "latest")
-	image := strings.TrimSuffix(os.Getenv("EXPORTER_NAME"), "finops-prometheus-exporter")
+	imageVersion := os.Getenv("EXPORTER_VERSION")
+	image := os.Getenv("EXPORTER_NAME")
+
+	if imageVersion == "" {
+		imageVersion = "latest"
+	}
+	if image == "" {
+		image = "finops-prometheus-exporter"
+	}
 
 	imageName += "/" + image + ":" + imageVersion
 

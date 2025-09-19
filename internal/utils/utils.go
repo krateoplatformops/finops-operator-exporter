@@ -20,8 +20,15 @@ func Int32Ptr(i int32) *int32 { return &i }
 
 func GetGenericExporterDeployment(exporterScraperConfig *finopsv1.ExporterScraperConfig) (*appsv1.Deployment, error) {
 	imageName := strings.TrimSuffix(os.Getenv("REGISTRY"), "/")
-	imageVersion := strings.TrimSuffix(os.Getenv("EXPORTER_VERSION"), "latest")
-	image := strings.TrimSuffix(os.Getenv("EXPORTER_NAME"), "finops-prometheus-exporter")
+	imageVersion := os.Getenv("EXPORTER_VERSION")
+	image := os.Getenv("EXPORTER_NAME")
+
+	if imageVersion == "" {
+		imageVersion = "latest"
+	}
+	if image == "" {
+		image = "finops-prometheus-exporter"
+	}
 
 	imageName += "/" + image + ":" + imageVersion
 
