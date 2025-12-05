@@ -51,6 +51,7 @@ import (
 
 const (
 	errNotExporterScraperConfig = "managed resource is not an exporter scraper config custom resource"
+	restartedAnnotationLabel    = "kubectl.kubernetes.io/restartedAt"
 )
 
 //+kubebuilder:rbac:groups=finops.krateo.io,namespace=finops,resources=exporterscraperconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -252,6 +253,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) error {
 	}
 
 	genericExporterDeployment, _ := utils.GetGenericExporterDeployment(exporterScraperConfig)
+	// Set the annotation to trigger a rollout
+	if genericExporterDeployment.Spec.Template.Annotations == nil {
+		genericExporterDeployment.Spec.Template.Annotations = map[string]string{}
+	}
+	genericExporterDeployment.Spec.Template.Annotations[restartedAnnotationLabel] = time.Now().Format(time.RFC3339)
 	genericExporterDeploymentUnstructured, err := clientHelper.ToUnstructured(genericExporterDeployment)
 	if err != nil {
 		return err
