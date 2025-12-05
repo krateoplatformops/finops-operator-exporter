@@ -214,6 +214,7 @@ func GetGenericExporterScraperConfig(exporterScraperConfig *finopsv1.ExporterScr
 			TableName:       exporterScraperConfig.Spec.ScraperConfig.TableName,
 			API:             api,
 			MetricType:      exporterScraperConfig.Spec.ExporterConfig.MetricType,
+			Generic:         exporterScraperConfig.Spec.ExporterConfig.Generic,
 			PollingInterval: exporterScraperConfig.Spec.ScraperConfig.PollingInterval,
 			ScraperDatabaseConfigRef: finopsdatatypes.ObjectRef{
 				Name:      exporterScraperConfig.Spec.ScraperConfig.ScraperDatabaseConfigRef.Name,
