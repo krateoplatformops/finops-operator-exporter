@@ -149,7 +149,6 @@ spec:
                     type: object
                   metricType:
                     default: cost
-                    pattern: ^(\b[Cc]ost\b)|(\b[Rr]esource\b)|(\b[gG]eneric\b)$
                     type: string
                   pollingInterval:
                     format: duration
