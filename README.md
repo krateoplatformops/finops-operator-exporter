@@ -105,16 +105,18 @@ stringData:
 
 The field `spec.scraperConfig.api` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
 
-### Example Use Case for Pricing Visualization
-The Composable FinOps can be used to display pricing in the Krateo Composable Portal cards through a dedicated composition. You can find out more here: [vm-azure](https://github.com/krateoplatformops-blueprints/azure-vm-finops).
+### Example Use Case
+The Composable FinOps can be used to display pricing, costs and optimizations in the Krateo Composable Portal through a dedicated blueprint. You can find out more here: 
+- [azure-vm-finops](https://github.com/krateoplatformops-blueprints/azure-vm-finops).
+- [azure-compute-optimization-toolkit](github.com/krateoplatformops-blueprints/azure-compute-optimization-toolkit)
 
 
 ## Configuration
 To start the exporting process, see the examples section. The configuration sample includes the database-config CR.
 
-The exporter container is created in the namespace of the CR. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
+The exporter container is created in the namespace of the operator. The exporter container looks for a secret in the CR namespace called `registry-credentials`, configurable in the HELM chart.
 
-The FOCUS data needs to be in the CSV format and the `Tags` column has to use the following format:
+The FOCUS data needs to be in the CSV/JSON format and the `Tags` column has to use the following format:
 ```
 {"CostCenter": "1234","Cost department": "Marketing","env": "prod","org": "trey","Project": "Foo"}
 ```
@@ -133,7 +135,6 @@ The operator can be installed through its [Helm chart](https://github.com/krateo
 ### Dependencies
 To run this repository in your Kubernetes cluster, you need to install the following Krateo Composable FinOps components
  - prometheus-exporter
- - prometheus-scraper-generic
  - operator-scraper
  - finops-database-handler
 
