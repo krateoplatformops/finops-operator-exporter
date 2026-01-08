@@ -61,6 +61,48 @@ spec:
 ```
 If the field `metricType` is set to `cost`, then the API in `url` must expose a FOCUS report in a CSV/JSON file. Otherwise, if set to `resource`, it must expose usage metrics according to the JSON/OPENAPI schema in the folder resources and the field `additionalVariables` must contain a field `ResourceId` with the identifier of the resources to be used in the database as external key to reference the cost metric from the usage metric (i.e., the same as the field `resourceId` of the focusConfig CR).
 
+The `metricType` `generic` removes checks on the schema, allowing for the upload of arbitrary data. However, there is still the need to point out which field is the data point and what is the name of the metric:
+- the `valueColumnIndex` tells us which field will be the metric value: for CSV its the column index, for JSON its the index for all the keys sorted alphabetically for all the objects.
+- the `metricName` instead allows to specify a name for the metric, which will also be used by the scraper to select only a specific metric if the type is generic (e.g., exporting/scraping from a prometheus endpoint with many metrics)
+
+Additionally, this feature will be used to upload metrics in the Prometheus API format, allowing the use of the Prometheus Exporting Stack for pods, nodes, etc. inside the cluster and not relying on external data coming from service providers.
+
+The configuration for the Prometheus API looks like this:
+```yaml
+apiVersion: finops.krateo.io/v1
+kind: ExporterScraperConfig
+metadata:
+  name: exporterscraperconfig-sample
+  namespace: krateo-system
+spec:
+  exporterConfig:
+    api: 
+      path: /api/v1/query?query=container_cpu_usage_seconds_total
+      verb: GET
+      endpointRef:
+        name: promethes-endpoint
+        namespace: prom-system
+    metricType: generic
+    generic:
+      valueColumnIndex: 14
+      metricName: cpu
+    pollingInterval: "1m"
+  scraperConfig:
+    pollingInterval: "1m"
+    tableName: testprom
+    scraperDatabaseConfigRef:
+      name: finops-database-handler
+      namespace: krateo-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: promethes-endpoint
+  namespace: prom-system
+stringData:
+  server-url: http://kind-prometheus-kube-prome-prometheus.monitoring.svc:9090
+```
+
 The field `spec.scraperConfig.api` can be left empty if the exporter and scraper are both configured. The operator will compile this field automatically.
 
 ### Example Use Case for Pricing Visualization
