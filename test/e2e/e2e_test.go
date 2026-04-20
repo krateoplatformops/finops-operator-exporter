@@ -493,7 +493,7 @@ func TestExporter(t *testing.T) {
 func startTestManager(ctx context.Context, scheme *runtime.Scheme) error {
 	os.Setenv("REGISTRY", "ghcr.io/krateoplatformops")
 	os.Setenv("REGISTRY_CREDENTIALS", "registry-credentials")
-	os.Setenv("EXPORTER_VERSION", "0.5.0")
+	os.Setenv("EXPORTER_VERSION", "0.5.2")
 	os.Setenv("EXPORTER_NAME", "finops-prometheus-exporter")
 
 	var metricsAddr string
