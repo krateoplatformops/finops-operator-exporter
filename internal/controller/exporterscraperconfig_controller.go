@@ -70,18 +70,19 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	log := o.Logger.WithValues("controller", name)
 	log.Info("controller", "name", name)
 
-	recorder := mgr.GetEventRecorderFor(name)
+	innerRecorder := mgr.GetEventRecorderFor(name)
+	rec := NewThrottledRecorder(innerRecorder)
 
 	r := reconciler.NewReconciler(mgr,
 		resource.ManagedKind(finopsv1.GroupVersionKind),
 		reconciler.WithExternalConnecter(&connector{
 			log:          log,
-			recorder:     recorder,
+			recorder:     rec,
 			pollInterval: o.PollInterval,
 		}),
 		reconciler.WithPollInterval(o.PollInterval),
 		reconciler.WithLogger(log),
-		reconciler.WithRecorder(event.NewAPIRecorder(recorder)))
+		reconciler.WithRecorder(event.NewAPIRecorder(rec)))
 
 	log.Debug("polling rate", "rate", o.PollInterval)
 
